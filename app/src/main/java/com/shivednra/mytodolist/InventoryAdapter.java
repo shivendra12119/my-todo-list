@@ -4,6 +4,7 @@ import android.graphics.Color;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ImageButton;
 import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.core.content.ContextCompat;
@@ -18,14 +19,15 @@ public class InventoryAdapter extends RecyclerView.Adapter<InventoryAdapter.Inve
 
     private List<InventoryItem> inventoryList;
     private List<Integer> backgroundColors;
-    private OnItemClickListener listener;
+    private OnItemInteractionListener listener;
     private int mode; // 0: Stock, 1: Add, 2: Remove
 
-    public interface OnItemClickListener {
+    public interface OnItemInteractionListener {
         void onItemClick(InventoryItem item);
+        void onItemEdit(InventoryItem item);
     }
 
-    public InventoryAdapter(List<InventoryItem> inventoryList, int mode, OnItemClickListener listener) {
+    public InventoryAdapter(List<InventoryItem> inventoryList, int mode, OnItemInteractionListener listener) {
         this.inventoryList = inventoryList;
         this.mode = mode;
         this.listener = listener;
@@ -77,6 +79,7 @@ public class InventoryAdapter extends RecyclerView.Adapter<InventoryAdapter.Inve
                     rightText = expDate;
                 }
             }
+            holder.buttonEdit.setVisibility(View.VISIBLE);
         } else { // Add or Remove -> Show Time
             long time = (mode == 1) ? item.getAddedTime() : item.getRemovedTime();
             if (time > 0) {
@@ -85,11 +88,12 @@ public class InventoryAdapter extends RecyclerView.Adapter<InventoryAdapter.Inve
             } else {
                 rightText = "N/A";
             }
+            holder.buttonEdit.setVisibility(View.GONE);
         }
         
         holder.textViewRight.setText(rightText);
 
-        // Apply background color based on grouping (only relevant for Stock tab usually)
+        // Apply background color
         int color;
         if (backgroundColors != null && position < backgroundColors.size() && backgroundColors.get(position) == 1) {
             color = ContextCompat.getColor(holder.itemView.getContext(), R.color.light_gray);
@@ -101,6 +105,12 @@ public class InventoryAdapter extends RecyclerView.Adapter<InventoryAdapter.Inve
         holder.itemView.setOnClickListener(v -> {
             if (listener != null) {
                 listener.onItemClick(item);
+            }
+        });
+
+        holder.buttonEdit.setOnClickListener(v -> {
+            if (listener != null) {
+                listener.onItemEdit(item);
             }
         });
     }
@@ -120,11 +130,13 @@ public class InventoryAdapter extends RecyclerView.Adapter<InventoryAdapter.Inve
     public static class InventoryViewHolder extends RecyclerView.ViewHolder {
         TextView textViewSize;
         TextView textViewRight;
+        ImageButton buttonEdit;
 
         public InventoryViewHolder(@NonNull View itemView) {
             super(itemView);
             textViewSize = itemView.findViewById(R.id.textViewTask);
             textViewRight = itemView.findViewById(R.id.textViewQuantity);
+            buttonEdit = itemView.findViewById(R.id.buttonEditItem);
         }
     }
 }

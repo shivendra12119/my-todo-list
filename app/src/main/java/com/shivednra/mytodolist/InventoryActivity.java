@@ -4,10 +4,7 @@ import android.net.Uri;
 import android.os.Bundle;
 import android.view.Menu;
 import android.view.MenuItem;
-import android.view.View;
-import android.widget.Button;
 import android.widget.EditText;
-import android.widget.TextView;
 import android.widget.Toast;
 import androidx.annotation.NonNull;
 import androidx.activity.result.ActivityResultLauncher;
@@ -18,10 +15,13 @@ import androidx.appcompat.widget.Toolbar;
 import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
-import androidx.recyclerview.widget.LinearLayoutManager;
-import androidx.recyclerview.widget.RecyclerView;
+import androidx.fragment.app.Fragment;
+import androidx.fragment.app.FragmentActivity;
+import androidx.viewpager2.adapter.FragmentStateAdapter;
+import androidx.viewpager2.widget.ViewPager2;
 
 import com.google.android.material.tabs.TabLayout;
+import com.google.android.material.tabs.TabLayoutMediator;
 import com.google.mlkit.vision.common.InputImage;
 import com.google.mlkit.vision.text.TextRecognition;
 import com.google.mlkit.vision.text.TextRecognizer;
@@ -29,23 +29,24 @@ import com.google.mlkit.vision.text.latin.TextRecognizerOptions;
 
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Calendar;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class InventoryActivity extends AppCompatActivity {
 
+    private ViewPager2 viewPager;
     private TabLayout tabLayout;
-    private View layoutButtons;
-    private Button buttonManualEntry;
-    private TextView textViewResult;
-    private RecyclerView recyclerViewInventory;
-    private InventoryAdapter adapter;
-    private List<InventoryItem> inventoryList;
     private AppDatabase db;
+    private InventoryPagerAdapter pagerAdapter;
 
-    private ActivityResultLauncher<String> mGetContent;
+    private final ActivityResultLauncher<String> mGetContent = registerForActivityResult(
+            new ActivityResultContracts.GetContent(),
+            uri -> {
+                if (uri != null) {
+                    processImage(uri);
+                }
+            });
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -68,52 +69,32 @@ public class InventoryActivity extends AppCompatActivity {
         });
 
         tabLayout = findViewById(R.id.tabLayout);
-        layoutButtons = findViewById(R.id.layoutButtons);
-        buttonManualEntry = findViewById(R.id.buttonManualEntry);
-        Button buttonUploadPhoto = findViewById(R.id.buttonUploadPhoto);
-        textViewResult = findViewById(R.id.textViewResult);
-        recyclerViewInventory = findViewById(R.id.recyclerViewInventory);
+        viewPager = findViewById(R.id.viewPager);
 
-        recyclerViewInventory.setLayoutManager(new LinearLayoutManager(this));
-        
-        tabLayout.addOnTabSelectedListener(new TabLayout.OnTabSelectedListener() {
-            @Override
-            public void onTabSelected(TabLayout.Tab tab) {
-                refreshInventoryList();
-                updateUIForTab(tab.getPosition());
+        pagerAdapter = new InventoryPagerAdapter(this);
+        viewPager.setAdapter(pagerAdapter);
+
+        new TabLayoutMediator(tabLayout, viewPager, (tab, position) -> {
+            switch (position) {
+                case 0: tab.setText("Stock"); break;
+                case 1: tab.setText("Add"); break;
+                case 2: tab.setText("Remove"); break;
             }
+        }).attach();
+        
+        viewPager.registerOnPageChangeCallback(new ViewPager2.OnPageChangeCallback() {
             @Override
-            public void onTabUnselected(TabLayout.Tab tab) {}
-            @Override
-            public void onTabReselected(TabLayout.Tab tab) {}
+            public void onPageSelected(int position) {
+                refreshActiveFragment();
+            }
         });
-
-        refreshInventoryList();
-
-        buttonManualEntry.setOnClickListener(v -> showManualEntryDialog());
-
-        mGetContent = registerForActivityResult(new ActivityResultContracts.GetContent(),
-                uri -> {
-                    if (uri != null) {
-                        processImage(uri);
-                    }
-                });
-
-        buttonUploadPhoto.setOnClickListener(v -> mGetContent.launch("image/*"));
     }
 
-    private void updateUIForTab(int position) {
-        if (position == 0) { // Stock
-            layoutButtons.setVisibility(View.GONE);
-            textViewResult.setVisibility(View.GONE);
-        } else { // Add or Remove
-            layoutButtons.setVisibility(View.VISIBLE);
-            textViewResult.setVisibility(View.VISIBLE);
-            buttonManualEntry.setVisibility(position == 1 ? View.VISIBLE : View.GONE);
-        }
+    public void launchPhotoPicker() {
+        mGetContent.launch("image/*");
     }
 
-    private void showManualEntryDialog() {
+    public void showManualEntryDialog() {
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
         builder.setTitle(R.string.manual_entry_title);
 
@@ -154,17 +135,74 @@ public class InventoryActivity extends AppCompatActivity {
                         inputLot.getText().toString().trim(),
                         inputMfg.getText().toString().trim(),
                         inputExp.getText().toString().trim(), 1);
-                refreshInventoryList();
             } else {
                 Toast.makeText(this, "Invalid Size format", Toast.LENGTH_SHORT).show();
             }
         });
         builder.setNegativeButton("Cancel", (dialog, which) -> dialog.cancel());
-
         builder.show();
     }
 
-    private void showDetailsDialog(InventoryItem item) {
+    public void showEditItemDialog(InventoryItem item) {
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        builder.setTitle("Edit Packet Details");
+
+        android.widget.LinearLayout layout = new android.widget.LinearLayout(this);
+        layout.setOrientation(android.widget.LinearLayout.VERTICAL);
+        layout.setPadding(50, 20, 50, 20);
+
+        final EditText inputSize = new EditText(this);
+        inputSize.setHint(R.string.hint_diameter_length);
+        inputSize.setText(item.getDiameter() + "X" + item.getLength());
+        layout.addView(inputSize);
+
+        final EditText inputRef = new EditText(this);
+        inputRef.setHint(R.string.hint_ref);
+        inputRef.setText(item.getRef());
+        layout.addView(inputRef);
+
+        final EditText inputLot = new EditText(this);
+        inputLot.setHint(R.string.hint_lot);
+        inputLot.setText(item.getLot());
+        layout.addView(inputLot);
+
+        final EditText inputMfg = new EditText(this);
+        inputMfg.setHint(R.string.hint_mfg);
+        inputMfg.setText(item.getMfgDate());
+        layout.addView(inputMfg);
+
+        final EditText inputExp = new EditText(this);
+        inputExp.setHint(R.string.hint_exp);
+        inputExp.setText(item.getExpDate());
+        layout.addView(inputExp);
+
+        builder.setView(layout);
+
+        builder.setPositiveButton("Save", (dialog, which) -> {
+            String sizeStr = inputSize.getText().toString().trim();
+            Pattern p = Pattern.compile("(\\d+(?:\\.\\d+)?)\\s*[xX]\\s*(\\d+(?:\\.\\d+)?)");
+            Matcher m = p.matcher(sizeStr);
+            
+            if (m.find()) {
+                item.setDiameter(m.group(1));
+                item.setLength(m.group(2));
+                item.setRef(inputRef.getText().toString().trim());
+                item.setLot(inputLot.getText().toString().trim());
+                item.setMfgDate(inputMfg.getText().toString().trim());
+                item.setExpDate(inputExp.getText().toString().trim());
+                
+                db.inventoryDao().update(item);
+                refreshActiveFragment();
+                Toast.makeText(this, "Packet updated", Toast.LENGTH_SHORT).show();
+            } else {
+                Toast.makeText(this, "Invalid Size format", Toast.LENGTH_SHORT).show();
+            }
+        });
+        builder.setNegativeButton("Cancel", null);
+        builder.show();
+    }
+
+    public void showDetailsDialog(InventoryItem item) {
         StringBuilder message = new StringBuilder();
         message.append("REF: ").append(item.getRef() != null ? item.getRef() : "N/A").append("\n");
         message.append("LOT: ").append(item.getLot() != null ? item.getLot() : "N/A").append("\n");
@@ -195,9 +233,8 @@ public class InventoryActivity extends AppCompatActivity {
                     .setMessage("Are you sure you want to clear the entire inventory?")
                     .setPositiveButton("Clear All", (dialog, which) -> {
                         db.inventoryDao().softDeleteAll(System.currentTimeMillis());
-                        refreshInventoryList();
-                        textViewResult.setText(R.string.extracted_size_none);
-                        Toast.makeText(this, "Inventory cleared (Soft Deleted)", Toast.LENGTH_SHORT).show();
+                        refreshActiveFragment();
+                        Toast.makeText(this, "Inventory cleared", Toast.LENGTH_SHORT).show();
                     })
                     .setNegativeButton("Cancel", null)
                     .show();
@@ -250,7 +287,8 @@ public class InventoryActivity extends AppCompatActivity {
         }
 
         int count = sizes.size();
-        int change = tabLayout.getSelectedTabPosition() == 1 ? 1 : -1;
+        int currentTab = viewPager.getCurrentItem();
+        int change = currentTab == 1 ? 1 : -1;
         StringBuilder summary = new StringBuilder();
 
         for (int i = 0; i < count; i++) {
@@ -267,11 +305,13 @@ public class InventoryActivity extends AppCompatActivity {
         }
 
         if (count > 0) {
-            refreshInventoryList();
-            textViewResult.setText(getString(R.string.extracted_summary, count, summary.toString()));
+            refreshActiveFragment();
+            InventoryTabFragment currentFrag = pagerAdapter.getFragment(viewPager.getCurrentItem());
+            if (currentFrag != null) {
+                currentFrag.updateResultText(getString(R.string.extracted_summary, count, summary.toString()));
+            }
             Toast.makeText(this, "Processed " + count + " items", Toast.LENGTH_SHORT).show();
         } else {
-            textViewResult.setText(getString(R.string.extracted_size_not_found));
             Toast.makeText(this, getString(R.string.msg_not_found), Toast.LENGTH_LONG).show();
         }
     }
@@ -291,31 +331,39 @@ public class InventoryActivity extends AppCompatActivity {
                 Toast.makeText(this, "Active stock for " + dia + "X" + len + " not found.", Toast.LENGTH_SHORT).show();
             }
         }
+        refreshActiveFragment();
     }
 
-    private void refreshInventoryList() {
-        int tabPosition = tabLayout.getSelectedTabPosition();
-        
-        Calendar cal = Calendar.getInstance();
-        cal.set(Calendar.HOUR_OF_DAY, 0);
-        cal.set(Calendar.MINUTE, 0);
-        cal.set(Calendar.SECOND, 0);
-        cal.set(Calendar.MILLISECOND, 0);
-        long todayStart = cal.getTimeInMillis();
+    private void refreshActiveFragment() {
+        InventoryTabFragment fragment = pagerAdapter.getFragment(viewPager.getCurrentItem());
+        if (fragment != null) {
+            fragment.refreshList();
+        }
+    }
 
-        if (tabPosition == 0) {
-            inventoryList = db.inventoryDao().getAllActive();
-        } else if (tabPosition == 1) {
-            inventoryList = db.inventoryDao().getRecentAdds(todayStart);
-        } else {
-            inventoryList = db.inventoryDao().getRecentRemoves(todayStart);
+    private static class InventoryPagerAdapter extends FragmentStateAdapter {
+        private final List<InventoryTabFragment> fragments = new ArrayList<>();
+
+        public InventoryPagerAdapter(@NonNull FragmentActivity fragmentActivity) {
+            super(fragmentActivity);
+            fragments.add(InventoryTabFragment.newInstance(0));
+            fragments.add(InventoryTabFragment.newInstance(1));
+            fragments.add(InventoryTabFragment.newInstance(2));
         }
 
-        if (adapter == null) {
-            adapter = new InventoryAdapter(inventoryList, tabPosition, this::showDetailsDialog);
-            recyclerViewInventory.setAdapter(adapter);
-        } else {
-            adapter.updateList(inventoryList, tabPosition);
+        @NonNull
+        @Override
+        public Fragment createFragment(int position) {
+            return fragments.get(position);
+        }
+
+        @Override
+        public int getItemCount() {
+            return 3;
+        }
+
+        public InventoryTabFragment getFragment(int position) {
+            return fragments.get(position);
         }
     }
 }

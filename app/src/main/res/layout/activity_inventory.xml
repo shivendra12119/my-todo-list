@@ -20,64 +20,11 @@
         android:background="?attr/colorPrimary"
         app:tabTextColor="#CCCCCC"
         app:tabSelectedTextColor="@android:color/white"
-        app:tabIndicatorColor="@android:color/white">
+        app:tabIndicatorColor="@android:color/white" />
 
-        <com.google.android.material.tabs.TabItem
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Stock" />
-
-        <com.google.android.material.tabs.TabItem
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Add" />
-
-        <com.google.android.material.tabs.TabItem
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Remove" />
-    </com.google.android.material.tabs.TabLayout>
-
-    <LinearLayout
-        android:id="@+id/layoutButtons"
+    <androidx.viewpager2.widget.ViewPager2
+        android:id="@+id/viewPager"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:orientation="vertical"
-        android:padding="16dp"
-        android:visibility="gone">
-
-        <Button
-            android:id="@+id/buttonManualEntry"
-            style="@style/Widget.MaterialComponents.Button.OutlinedButton"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="@string/button_manual_entry" />
-
-        <Button
-            android:id="@+id/buttonUploadPhoto"
-            style="@style/Widget.MaterialComponents.Button.OutlinedButton"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="8dp"
-            android:text="@string/button_upload_photo" />
-    </LinearLayout>
-
-    <TextView
-        android:id="@+id/textViewResult"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:paddingHorizontal="16dp"
-        android:text="@string/extracted_size_none"
-        android:textSize="14sp"
-        android:textStyle="bold"
-        android:textColor="@color/purple_700"
-        android:visibility="gone" />
-
-    <androidx.recyclerview.widget.RecyclerView
-        android:id="@+id/recyclerViewInventory"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:paddingHorizontal="16dp"
-        android:layout_marginTop="8dp" />
+        android:layout_height="match_parent" />
 
 </LinearLayout>

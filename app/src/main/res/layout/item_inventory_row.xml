@@ -21,4 +21,13 @@
         android:textStyle="bold"
         android:textColor="@color/purple_700" />
 
+    <ImageButton
+        android:id="@+id/buttonEditItem"
+        android:layout_width="48dp"
+        android:layout_height="48dp"
+        android:background="?attr/selectableItemBackgroundBorderless"
+        android:src="@android:drawable/ic_menu_edit"
+        android:contentDescription="Edit Item"
+        android:layout_marginStart="8dp" />
+
 </LinearLayout>
