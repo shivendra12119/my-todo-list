@@ -135,7 +135,7 @@ public class InventoryActivity extends AppCompatActivity {
                         inputRef.getText().toString().trim(),
                         inputLot.getText().toString().trim(),
                         inputMfg.getText().toString().trim(),
-                        inputExp.getText().toString().trim(), 1);
+                        inputExp.getText().toString().trim(), 1, "MANUAL");
             } else {
                 Toast.makeText(this, "Invalid Size format", Toast.LENGTH_SHORT).show();
             }
@@ -185,6 +185,7 @@ public class InventoryActivity extends AppCompatActivity {
             Matcher m = p.matcher(sizeStr);
             
             if (m.find()) {
+                long time = System.currentTimeMillis();
                 item.setDiameter(m.group(1));
                 item.setLength(m.group(2));
                 item.setRef(inputRef.getText().toString().trim());
@@ -193,6 +194,8 @@ public class InventoryActivity extends AppCompatActivity {
                 item.setExpDate(inputExp.getText().toString().trim());
                 
                 db.inventoryDao().update(item);
+                db.transactionDao().insert(new InventoryTransaction("EDITED", "MANUAL", time, item.getDiameter(), item.getLength(), item.getRef(), item.getLot()));
+                
                 refreshActiveFragment();
                 Toast.makeText(this, "Packet updated", Toast.LENGTH_SHORT).show();
             } else {
@@ -207,7 +210,7 @@ public class InventoryActivity extends AppCompatActivity {
                     long time = System.currentTimeMillis();
                     item.setRemovedTime(time);
                     db.inventoryDao().update(item);
-                    db.transactionDao().insert(new InventoryTransaction("REMOVED", time, item.getDiameter(), item.getLength(), item.getRef(), item.getLot()));
+                    db.transactionDao().insert(new InventoryTransaction("REMOVED", "MANUAL", time, item.getDiameter(), item.getLength(), item.getRef(), item.getLot()));
                     refreshActiveFragment();
                     Toast.makeText(this, "Packet removed", Toast.LENGTH_SHORT).show();
                 })
@@ -318,7 +321,7 @@ public class InventoryActivity extends AppCompatActivity {
             String mfg = (i * 2) < dates.size() ? dates.get(i * 2) : "";
             String exp = (i * 2 + 1) < dates.size() ? dates.get(i * 2 + 1) : "";
 
-            performUpdate(dia, len, ref, lot, mfg, exp, change);
+            performUpdate(dia, len, ref, lot, mfg, exp, change, "SCAN");
             if (i > 0) summary.append(", ");
             summary.append(dia).append("X").append(len);
         }
@@ -335,17 +338,17 @@ public class InventoryActivity extends AppCompatActivity {
         }
     }
 
-    private void performUpdate(String dia, String len, String ref, String lot, String mfg, String exp, int change) {
+    private void performUpdate(String dia, String len, String ref, String lot, String mfg, String exp, int change, String method) {
         long time = System.currentTimeMillis();
         if (change > 0) {
             db.inventoryDao().insert(new InventoryItem(dia, len, ref, lot, mfg, exp));
-            db.transactionDao().insert(new InventoryTransaction("ADDED", time, dia, len, ref, lot));
+            db.transactionDao().insert(new InventoryTransaction("ADDED", method, time, dia, len, ref, lot));
         } else {
             InventoryItem toRemove = db.inventoryDao().findOldestActiveStock(dia, len);
             if (toRemove != null) {
                 toRemove.setRemovedTime(time);
                 db.inventoryDao().update(toRemove);
-                db.transactionDao().insert(new InventoryTransaction("REMOVED", time, dia, len, toRemove.getRef(), toRemove.getLot()));
+                db.transactionDao().insert(new InventoryTransaction("REMOVED", method, time, dia, len, toRemove.getRef(), toRemove.getLot()));
             } else {
                 Toast.makeText(this, "Active stock for " + dia + "X" + len + " not found.", Toast.LENGTH_SHORT).show();
             }

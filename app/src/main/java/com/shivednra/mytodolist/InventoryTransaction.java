@@ -8,7 +8,8 @@ public class InventoryTransaction {
     @PrimaryKey(autoGenerate = true)
     private int id;
 
-    private String type; // "ADDED" or "REMOVED"
+    private String type; // "ADDED", "REMOVED", "EDITED"
+    private String method; // "MANUAL", "SCAN"
     private long timestamp;
     
     private String diameter;
@@ -16,8 +17,9 @@ public class InventoryTransaction {
     private String ref;
     private String lot;
 
-    public InventoryTransaction(String type, long timestamp, String diameter, String length, String ref, String lot) {
+    public InventoryTransaction(String type, String method, long timestamp, String diameter, String length, String ref, String lot) {
         this.type = type;
+        this.method = method;
         this.timestamp = timestamp;
         this.diameter = diameter;
         this.length = length;
@@ -30,6 +32,9 @@ public class InventoryTransaction {
 
     public String getType() { return type; }
     public void setType(String type) { this.type = type; }
+
+    public String getMethod() { return method; }
+    public void setMethod(String method) { this.method = method; }
 
     public long getTimestamp() { return timestamp; }
     public void setTimestamp(long timestamp) { this.timestamp = timestamp; }

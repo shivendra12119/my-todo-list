@@ -31,15 +31,30 @@ public class TransactionAdapter extends RecyclerView.Adapter<TransactionAdapter.
     public void onBindViewHolder(@NonNull TransactionViewHolder holder, int position) {
         InventoryTransaction trans = transactions.get(position);
         
-        holder.textViewType.setText(trans.getType());
-        if ("ADDED".equals(trans.getType())) {
-            holder.textViewType.setBackgroundColor(Color.parseColor("#4CAF50")); // Green
-        } else {
-            holder.textViewType.setBackgroundColor(Color.parseColor("#F44336")); // Red
+        String typeText = trans.getType();
+        holder.textViewType.setText(typeText);
+        
+        // Color coding by type
+        switch (typeText) {
+            case "ADDED":
+                holder.textViewType.setBackgroundColor(Color.parseColor("#4CAF50")); // Green
+                break;
+            case "REMOVED":
+                holder.textViewType.setBackgroundColor(Color.parseColor("#F44336")); // Red
+                break;
+            case "EDITED":
+                holder.textViewType.setBackgroundColor(Color.parseColor("#FF9800")); // Orange
+                break;
+            default:
+                holder.textViewType.setBackgroundColor(Color.GRAY);
+                break;
         }
 
         holder.textViewSize.setText(trans.getDiameter() + " X " + trans.getLength());
-        holder.textViewDetails.setText("LOT: " + trans.getLot() + " | REF: " + trans.getRef());
+        
+        // Show method (Scan/Manual) in details
+        String details = "LOT: " + trans.getLot() + " | REF: " + trans.getRef() + " (" + trans.getMethod() + ")";
+        holder.textViewDetails.setText(details);
         
         SimpleDateFormat sdf = new SimpleDateFormat("dd MMM, HH:mm", Locale.getDefault());
         holder.textViewTime.setText(sdf.format(new Date(trans.getTimestamp())));
@@ -47,7 +62,7 @@ public class TransactionAdapter extends RecyclerView.Adapter<TransactionAdapter.
 
     @Override
     public int getItemCount() {
-        return transactions.size();
+        return transactions == null ? 0 : transactions.size();
     }
 
     public void updateList(List<InventoryTransaction> newList) {
