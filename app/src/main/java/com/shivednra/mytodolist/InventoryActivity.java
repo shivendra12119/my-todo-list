@@ -3,6 +3,7 @@ package com.shivednra.mytodolist;
 import android.graphics.Color;
 import android.net.Uri;
 import android.os.Bundle;
+import android.os.Environment;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.widget.EditText;
@@ -13,6 +14,7 @@ import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
+import androidx.core.content.FileProvider;
 import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
@@ -28,9 +30,13 @@ import com.google.mlkit.vision.text.TextRecognition;
 import com.google.mlkit.vision.text.TextRecognizer;
 import com.google.mlkit.vision.text.latin.TextRecognizerOptions;
 
+import java.io.File;
 import java.io.IOException;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
+import java.util.Locale;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -40,12 +46,21 @@ public class InventoryActivity extends AppCompatActivity {
     private TabLayout tabLayout;
     private AppDatabase db;
     private InventoryPagerAdapter pagerAdapter;
+    private Uri cameraImageUri;
 
     private final ActivityResultLauncher<String> mGetContent = registerForActivityResult(
             new ActivityResultContracts.GetContent(),
             uri -> {
                 if (uri != null) {
                     processImage(uri);
+                }
+            });
+
+    private final ActivityResultLauncher<Uri> mTakePicture = registerForActivityResult(
+            new ActivityResultContracts.TakePicture(),
+            success -> {
+                if (success && cameraImageUri != null) {
+                    processImage(cameraImageUri);
                 }
             });
 
@@ -93,6 +108,25 @@ public class InventoryActivity extends AppCompatActivity {
 
     public void launchPhotoPicker() {
         mGetContent.launch("image/*");
+    }
+
+    public void launchCamera() {
+        try {
+            File photoFile = createImageFile();
+            cameraImageUri = FileProvider.getUriForFile(this, 
+                    getApplicationContext().getPackageName() + ".fileprovider", 
+                    photoFile);
+            mTakePicture.launch(cameraImageUri);
+        } catch (IOException ex) {
+            Toast.makeText(this, "Error creating file", Toast.LENGTH_SHORT).show();
+        }
+    }
+
+    private File createImageFile() throws IOException {
+        String timeStamp = new SimpleDateFormat("yyyyMMdd_HHmmss", Locale.getDefault()).format(new Date());
+        String imageFileName = "JPEG_" + timeStamp + "_";
+        File storageDir = getExternalFilesDir(Environment.DIRECTORY_PICTURES);
+        return File.createTempFile(imageFileName, ".jpg", storageDir);
     }
 
     public void showManualEntryDialog() {

@@ -51,6 +51,7 @@ public class InventoryTabFragment extends Fragment {
         layoutButtons = view.findViewById(R.id.layoutButtons);
         textViewResult = view.findViewById(R.id.textViewResult);
         Button buttonManual = view.findViewById(R.id.buttonManualEntry);
+        Button buttonCamera = view.findViewById(R.id.buttonCamera);
         Button buttonUpload = view.findViewById(R.id.buttonUploadPhoto);
 
         recyclerView.setLayoutManager(new LinearLayoutManager(getContext()));
@@ -65,6 +66,7 @@ public class InventoryTabFragment extends Fragment {
         }
 
         buttonManual.setOnClickListener(v -> ((InventoryActivity)requireActivity()).showManualEntryDialog());
+        buttonCamera.setOnClickListener(v -> ((InventoryActivity)requireActivity()).launchCamera());
         buttonUpload.setOnClickListener(v -> ((InventoryActivity)requireActivity()).launchPhotoPicker());
 
         refreshList();

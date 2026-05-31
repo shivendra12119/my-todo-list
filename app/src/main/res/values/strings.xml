@@ -2,7 +2,7 @@
     <string name="app_name">My Management App</string>
     <string name="hint_enter_task">Enter task</string>
     <string name="button_add">Add</string>
-    <string name="button_upload_photo">Upload Photo &amp; Extract Size</string>
+    <string name="button_upload_photo">Upload Photo</string>
     <string name="extracted_size_label">Extracted Size: %1$s</string>
     <string name="extracted_summary">Processed %1$d items: %2$s</string>
     <string name="extracted_size_none">Extracted Size: None</string>
@@ -20,6 +20,7 @@
     <string name="radio_reduce">Reduce</string>
     <string name="hint_todo">Enter a new task</string>
     <string name="action_clear">Clear All Data</string>
+    <string name="button_camera">Take Photo</string>
     <string name="manual_entry_title">Manual Packet Entry</string>
     <string name="hint_ref">REF (e.g. 140.949)</string>
     <string name="hint_lot">LOT (e.g. FKXP8)</string>
