@@ -36,7 +36,6 @@ import java.util.regex.Pattern;
 
 public class InventoryActivity extends AppCompatActivity {
 
-    private EditText editTextSize;
     private Button buttonUploadPhoto;
     private RadioButton radioAdd;
     private TextView textViewResult;
@@ -67,8 +66,6 @@ public class InventoryActivity extends AppCompatActivity {
             return insets;
         });
 
-        editTextSize = findViewById(R.id.editTextSize);
-        Button buttonAdd = findViewById(R.id.buttonAdd);
         Button buttonManualEntry = findViewById(R.id.buttonManualEntry);
         buttonUploadPhoto = findViewById(R.id.buttonUploadPhoto);
         radioAdd = findViewById(R.id.radioAdd);
@@ -77,14 +74,6 @@ public class InventoryActivity extends AppCompatActivity {
 
         recyclerViewInventory.setLayoutManager(new LinearLayoutManager(this));
         refreshInventoryList();
-
-        buttonAdd.setOnClickListener(v -> {
-            String input = editTextSize.getText().toString().trim();
-            if (!input.isEmpty()) {
-                manualInputProcessing(input);
-                editTextSize.setText("");
-            }
-        });
 
         buttonManualEntry.setOnClickListener(v -> showManualEntryDialog());
 
@@ -96,17 +85,6 @@ public class InventoryActivity extends AppCompatActivity {
                 });
 
         buttonUploadPhoto.setOnClickListener(v -> mGetContent.launch("image/*"));
-    }
-
-    private void manualInputProcessing(String input) {
-        Pattern p = Pattern.compile("(\\d+(?:\\.\\d+)?)\\s*[xX]\\s*(\\d+(?:\\.\\d+)?)");
-        Matcher m = p.matcher(input);
-        if (m.find()) {
-            performUpdate(m.group(1), m.group(2), "", "", "", "", 1);
-            refreshInventoryList();
-        } else {
-            Toast.makeText(this, "Invalid format. Use: DiameterXLength", Toast.LENGTH_SHORT).show();
-        }
     }
 
     private void showManualEntryDialog() {
