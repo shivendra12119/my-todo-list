@@ -28,9 +28,7 @@ import com.google.mlkit.vision.text.latin.TextRecognizerOptions;
 
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -41,7 +39,7 @@ public class InventoryActivity extends AppCompatActivity {
     private TextView textViewResult;
     private RecyclerView recyclerViewInventory;
     private InventoryAdapter adapter;
-    private List<InventoryAdapter.InventoryDisplayItem> inventoryDisplayList;
+    private List<InventoryItem> inventoryList;
     private AppDatabase db;
 
     private ActivityResultLauncher<String> mGetContent;
@@ -138,21 +136,15 @@ public class InventoryActivity extends AppCompatActivity {
         builder.show();
     }
 
-    private void showDetailsDialog(InventoryAdapter.InventoryDisplayItem item) {
-        List<InventoryItem> packets = db.inventoryDao().getAllActivePacketsForSize(item.diameter, item.length);
-        
+    private void showDetailsDialog(InventoryItem item) {
         StringBuilder message = new StringBuilder();
-        message.append("Total Quantity: ").append(item.quantity).append("\n\n");
-        message.append("Packets:\n");
-        
-        for (InventoryItem p : packets) {
-            message.append("- LOT: ").append(p.getLot() == null || p.getLot().isEmpty() ? "N/A" : p.getLot())
-                   .append(", EXP: ").append(p.getExpDate() == null || p.getExpDate().isEmpty() ? "N/A" : p.getExpDate())
-                   .append("\n");
-        }
+        message.append("REF: ").append(item.getRef() != null ? item.getRef() : "N/A").append("\n");
+        message.append("LOT: ").append(item.getLot() != null ? item.getLot() : "N/A").append("\n");
+        message.append("MFG: ").append(item.getMfgDate() != null ? item.getMfgDate() : "N/A").append("\n");
+        message.append("EXP: ").append(item.getExpDate() != null ? item.getExpDate() : "N/A").append("\n");
 
         new AlertDialog.Builder(this)
-                .setTitle("Details: " + item.diameter + " X " + item.length)
+                .setTitle("Details: " + item.getDiameter() + " X " + item.getLength())
                 .setMessage(message.toString())
                 .setPositiveButton("Close", null)
                 .show();
@@ -271,25 +263,12 @@ public class InventoryActivity extends AppCompatActivity {
     }
 
     private void refreshInventoryList() {
-        List<InventoryItem> allActive = db.inventoryDao().getAllActive();
-        Map<String, InventoryAdapter.InventoryDisplayItem> aggregatedMap = new LinkedHashMap<>();
-        
-        for (InventoryItem item : allActive) {
-            String key = item.getDiameter() + "X" + item.getLength();
-            if (aggregatedMap.containsKey(key)) {
-                InventoryAdapter.InventoryDisplayItem displayItem = aggregatedMap.get(key);
-                if (displayItem != null) displayItem.quantity += 1;
-            } else {
-                aggregatedMap.put(key, new InventoryAdapter.InventoryDisplayItem(item.getDiameter(), item.getLength(), 1));
-            }
-        }
-        
-        inventoryDisplayList = new ArrayList<>(aggregatedMap.values());
+        inventoryList = db.inventoryDao().getAllActive();
         if (adapter == null) {
-            adapter = new InventoryAdapter(inventoryDisplayList, this::showDetailsDialog);
+            adapter = new InventoryAdapter(inventoryList, this::showDetailsDialog);
             recyclerViewInventory.setAdapter(adapter);
         } else {
-            adapter.updateList(inventoryDisplayList);
+            adapter.updateList(inventoryList);
         }
     }
 }
