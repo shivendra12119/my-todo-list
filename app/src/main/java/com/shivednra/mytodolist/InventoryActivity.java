@@ -310,10 +310,10 @@ public class InventoryActivity extends AppCompatActivity {
         }
 
         if (adapter == null) {
-            adapter = new InventoryAdapter(inventoryList, this::showDetailsDialog);
+            adapter = new InventoryAdapter(inventoryList, tabPosition, this::showDetailsDialog);
             recyclerViewInventory.setAdapter(adapter);
         } else {
-            adapter.updateList(inventoryList);
+            adapter.updateList(inventoryList, tabPosition);
         }
     }
 }
