@@ -1,5 +1,6 @@
 package com.shivednra.mytodolist;
 
+import android.graphics.Color;
 import android.net.Uri;
 import android.os.Bundle;
 import android.view.Menu;
@@ -199,7 +200,25 @@ public class InventoryActivity extends AppCompatActivity {
             }
         });
         builder.setNegativeButton("Cancel", null);
-        builder.show();
+        builder.setNeutralButton("Remove", (dialog, which) -> new AlertDialog.Builder(this)
+                .setTitle("Confirm Removal")
+                .setMessage("Are you sure you want to remove this packet from inventory?")
+                .setPositiveButton("Remove", (d, w) -> {
+                    long time = System.currentTimeMillis();
+                    item.setRemovedTime(time);
+                    db.inventoryDao().update(item);
+                    db.transactionDao().insert(new InventoryTransaction("REMOVED", time, item.getDiameter(), item.getLength(), item.getRef(), item.getLot()));
+                    refreshActiveFragment();
+                    Toast.makeText(this, "Packet removed", Toast.LENGTH_SHORT).show();
+                })
+                .setNegativeButton("Cancel", null)
+                .show());
+
+        AlertDialog dialog = builder.create();
+        dialog.setOnShowListener(d -> {
+            dialog.getButton(AlertDialog.BUTTON_NEUTRAL).setTextColor(Color.RED);
+        });
+        dialog.show();
     }
 
     public void showDetailsDialog(InventoryItem item) {
