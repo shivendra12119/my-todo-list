@@ -5,10 +5,11 @@ import androidx.room.Database;
 import androidx.room.Room;
 import androidx.room.RoomDatabase;
 
-@Database(entities = {InventoryItem.class, TodoItem.class}, version = 6)
+@Database(entities = {InventoryItem.class, TodoItem.class, InventoryTransaction.class}, version = 7)
 public abstract class AppDatabase extends RoomDatabase {
     public abstract InventoryDao inventoryDao();
     public abstract TodoDao todoDao();
+    public abstract InventoryTransactionDao transactionDao();
 
     private static volatile AppDatabase INSTANCE;
 

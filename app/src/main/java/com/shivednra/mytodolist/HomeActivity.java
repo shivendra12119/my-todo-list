@@ -23,6 +23,7 @@ public class HomeActivity extends AppCompatActivity {
 
         MaterialCardView cardTodo = findViewById(R.id.cardTodo);
         MaterialCardView cardInventory = findViewById(R.id.cardInventory);
+        MaterialCardView cardLogs = findViewById(R.id.cardLogs);
 
         cardTodo.setOnClickListener(v -> {
             Intent intent = new Intent(HomeActivity.this, TodoActivity.class);
@@ -31,6 +32,11 @@ public class HomeActivity extends AppCompatActivity {
 
         cardInventory.setOnClickListener(v -> {
             Intent intent = new Intent(HomeActivity.this, InventoryActivity.class);
+            startActivity(intent);
+        });
+
+        cardLogs.setOnClickListener(v -> {
+            Intent intent = new Intent(HomeActivity.this, ActivityLogActivity.class);
             startActivity(intent);
         });
     }

@@ -29,6 +29,10 @@
             android:name=".InventoryActivity"
             android:parentActivityName=".HomeActivity" />
 
+        <activity
+            android:name=".ActivityLogActivity"
+            android:parentActivityName=".HomeActivity" />
+
     </application>
 
 </manifest>

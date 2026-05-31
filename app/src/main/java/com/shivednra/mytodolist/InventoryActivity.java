@@ -277,13 +277,16 @@ public class InventoryActivity extends AppCompatActivity {
     }
 
     private void performUpdate(String dia, String len, String ref, String lot, String mfg, String exp, int change) {
+        long time = System.currentTimeMillis();
         if (change > 0) {
             db.inventoryDao().insert(new InventoryItem(dia, len, ref, lot, mfg, exp));
+            db.transactionDao().insert(new InventoryTransaction("ADDED", time, dia, len, ref, lot));
         } else {
             InventoryItem toRemove = db.inventoryDao().findOldestActiveStock(dia, len);
             if (toRemove != null) {
-                toRemove.setRemovedTime(System.currentTimeMillis());
+                toRemove.setRemovedTime(time);
                 db.inventoryDao().update(toRemove);
+                db.transactionDao().insert(new InventoryTransaction("REMOVED", time, dia, len, toRemove.getRef(), toRemove.getLot()));
             } else {
                 Toast.makeText(this, "Active stock for " + dia + "X" + len + " not found.", Toast.LENGTH_SHORT).show();
             }
@@ -293,7 +296,6 @@ public class InventoryActivity extends AppCompatActivity {
     private void refreshInventoryList() {
         int tabPosition = tabLayout.getSelectedTabPosition();
         
-        // Calculate the start of today for activity logs
         Calendar cal = Calendar.getInstance();
         cal.set(Calendar.HOUR_OF_DAY, 0);
         cal.set(Calendar.MINUTE, 0);
