@@ -2,11 +2,14 @@ package com.shivednra.mytodolist;
 
 import android.net.Uri;
 import android.os.Bundle;
+import android.view.Menu;
+import android.view.MenuItem;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.RadioButton;
 import android.widget.TextView;
 import android.widget.Toast;
+import androidx.annotation.NonNull;
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.appcompat.app.AppCompatActivity;
@@ -71,9 +74,10 @@ public class MainActivity extends AppCompatActivity {
         recyclerViewTasks.setAdapter(adapter);
 
         buttonAdd.setOnClickListener(v -> {
-            String size = editTextTask.getText().toString();
-            if (!size.isEmpty()) {
-                performUpdate(size, 1);
+            String input = editTextTask.getText().toString().trim();
+            if (!input.isEmpty()) {
+                String cleanInput = normalizeManualInput(input);
+                performUpdate(cleanInput, 1);
                 refreshInventoryList();
                 editTextTask.setText("");
             }
@@ -89,16 +93,41 @@ public class MainActivity extends AppCompatActivity {
         buttonUploadPhoto.setOnClickListener(v -> mGetContent.launch("image/*"));
     }
 
+    private String normalizeManualInput(String input) {
+        // If it matches the pattern, extract only the numbers and X
+        Pattern p = Pattern.compile("(\\d+(?:\\.\\d+)?)\\s*[xX]\\s*(\\d+(?:\\.\\d+)?)");
+        Matcher m = p.matcher(input);
+        if (m.find()) {
+            return m.group(1) + "X" + m.group(2);
+        }
+        return input.toUpperCase().replaceAll("\\s+", "");
+    }
+
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        menu.add(0, 1, 0, "Clear All Data");
+        return true;
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(@NonNull MenuItem item) {
+        if (item.getItemId() == 1) {
+            db.clearAllTables();
+            refreshInventoryList();
+            textViewResult.setText(R.string.extracted_size_none);
+            Toast.makeText(this, "Inventory cleared", Toast.LENGTH_SHORT).show();
+            return true;
+        }
+        return super.onOptionsItemSelected(item);
+    }
+
     private void processImage(Uri uri) {
         try {
             InputImage image = InputImage.fromFilePath(this, uri);
             TextRecognizer recognizer = TextRecognition.getClient(TextRecognizerOptions.DEFAULT_OPTIONS);
 
             recognizer.process(image)
-                    .addOnSuccessListener(visionText -> {
-                        String resultText = visionText.getText();
-                        extractSize(resultText);
-                    })
+                    .addOnSuccessListener(visionText -> extractSize(visionText.getText()))
                     .addOnFailureListener(e -> Toast.makeText(MainActivity.this, getString(R.string.msg_failed_recognize), Toast.LENGTH_SHORT).show());
         } catch (IOException e) {
             e.printStackTrace();
@@ -106,7 +135,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void extractSize(String text) {
-        Pattern pattern = Pattern.compile("(\\d+(\\.\\d+)?)\\s*[xX]\\s*(\\d+(\\.\\d+)?)\\s*(mm|cm|inch|m)", Pattern.CASE_INSENSITIVE);
+        Pattern pattern = Pattern.compile("(\\d+(?:\\.\\d+)?)\\s*[xX]\\s*(\\d+(?:\\.\\d+)?)", Pattern.CASE_INSENSITIVE);
         Matcher matcher = pattern.matcher(text);
 
         int count = 0;
@@ -114,11 +143,10 @@ public class MainActivity extends AppCompatActivity {
         StringBuilder foundSizes = new StringBuilder();
 
         while (matcher.find()) {
-            String size = matcher.group(0);
+            // Construct clean format: "NUMBERXNUMBER"
+            String size = matcher.group(1) + "X" + matcher.group(2);
             performUpdate(size, change);
-            if (count > 0) {
-                foundSizes.append(", ");
-            }
+            if (count > 0) foundSizes.append(", ");
             foundSizes.append(size);
             count++;
         }
@@ -126,7 +154,7 @@ public class MainActivity extends AppCompatActivity {
         if (count > 0) {
             refreshInventoryList();
             textViewResult.setText(getString(R.string.extracted_summary, count, foundSizes.toString()));
-            Toast.makeText(this, "Successfully processed " + count + " items", Toast.LENGTH_SHORT).show();
+            Toast.makeText(this, "Processed " + count + " items", Toast.LENGTH_SHORT).show();
         } else {
             textViewResult.setText(getString(R.string.extracted_size_not_found));
             Toast.makeText(this, getString(R.string.msg_not_found), Toast.LENGTH_LONG).show();
@@ -136,15 +164,13 @@ public class MainActivity extends AppCompatActivity {
     private void performUpdate(String size, int change) {
         InventoryItem existingItem = db.inventoryDao().findBySize(size);
         if (existingItem != null) {
-            int newQty = existingItem.getQuantity() + change;
-            if (newQty < 0) newQty = 0;
+            int newQty = Math.max(0, existingItem.getQuantity() + change);
             existingItem.setQuantity(newQty);
             db.inventoryDao().update(existingItem);
         } else if (change > 0) {
-            InventoryItem newItem = new InventoryItem(size, change);
-            db.inventoryDao().insert(newItem);
+            db.inventoryDao().insert(new InventoryItem(size, change));
         } else {
-            Toast.makeText(this, "Cannot reduce. Size " + size + " not in inventory.", Toast.LENGTH_SHORT).show();
+            Toast.makeText(this, "Size " + size + " not found to reduce.", Toast.LENGTH_SHORT).show();
         }
     }
 
