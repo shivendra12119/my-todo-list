@@ -1,16 +1,20 @@
 package com.shivednra.mytodolist;
 
+import android.graphics.Color;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
 import androidx.annotation.NonNull;
+import androidx.core.content.ContextCompat;
 import androidx.recyclerview.widget.RecyclerView;
+import java.util.ArrayList;
 import java.util.List;
 
 public class InventoryAdapter extends RecyclerView.Adapter<InventoryAdapter.InventoryViewHolder> {
 
     private List<InventoryItem> inventoryList;
+    private List<Integer> backgroundColors;
     private OnItemClickListener listener;
 
     public interface OnItemClickListener {
@@ -20,6 +24,27 @@ public class InventoryAdapter extends RecyclerView.Adapter<InventoryAdapter.Inve
     public InventoryAdapter(List<InventoryItem> inventoryList, OnItemClickListener listener) {
         this.inventoryList = inventoryList;
         this.listener = listener;
+        calculateColors();
+    }
+
+    private void calculateColors() {
+        backgroundColors = new ArrayList<>();
+        if (inventoryList == null || inventoryList.isEmpty()) return;
+
+        int currentColorIndex = 0; // 0 for white, 1 for light gray
+        backgroundColors.add(currentColorIndex);
+
+        for (int i = 1; i < inventoryList.size(); i++) {
+            InventoryItem current = inventoryList.get(i);
+            InventoryItem previous = inventoryList.get(i - 1);
+
+            // If size is different, flip the color
+            if (!current.getDiameter().equals(previous.getDiameter()) || 
+                !current.getLength().equals(previous.getLength())) {
+                currentColorIndex = 1 - currentColorIndex;
+            }
+            backgroundColors.add(currentColorIndex);
+        }
     }
 
     @NonNull
@@ -48,6 +73,15 @@ public class InventoryAdapter extends RecyclerView.Adapter<InventoryAdapter.Inve
         }
         
         holder.textViewExp.setText(displayExp);
+
+        // Apply background color based on grouping
+        int color;
+        if (backgroundColors.get(position) == 0) {
+            color = Color.WHITE;
+        } else {
+            color = ContextCompat.getColor(holder.itemView.getContext(), R.color.light_gray);
+        }
+        holder.itemView.setBackgroundColor(color);
         
         holder.itemView.setOnClickListener(v -> {
             if (listener != null) {
@@ -58,11 +92,12 @@ public class InventoryAdapter extends RecyclerView.Adapter<InventoryAdapter.Inve
 
     @Override
     public int getItemCount() {
-        return inventoryList.size();
+        return inventoryList == null ? 0 : inventoryList.size();
     }
 
     public void updateList(List<InventoryItem> newList) {
         this.inventoryList = newList;
+        calculateColors();
         notifyDataSetChanged();
     }
 
