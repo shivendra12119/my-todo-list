@@ -2,4 +2,11 @@
     <string name="app_name">MyTodoList</string>
     <string name="hint_enter_task">Enter task</string>
     <string name="button_add">Add</string>
+    <string name="button_upload_photo">Upload Photo &amp; Extract Size</string>
+    <string name="extracted_size_label">Extracted Size: %1$s</string>
+    <string name="extracted_summary">Processed %1$d items: %2$s</string>
+    <string name="extracted_size_none">Extracted Size: None</string>
+    <string name="extracted_size_not_found">Extracted Size: Not found</string>
+    <string name="msg_failed_recognize">Failed to recognize text</string>
+    <string name="msg_not_found">Could not find size in the image</string>
 </resources>
