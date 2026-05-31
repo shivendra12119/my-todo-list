@@ -19,6 +19,9 @@ public class InventoryItem {
     private String mfgDate;
     private String expDate;
 
+    private long addedTime;
+    private long removedTime; // 0 if not removed
+
     public InventoryItem(@NonNull String diameter, @NonNull String length, String ref, String lot, String mfgDate, String expDate) {
         this.diameter = diameter;
         this.length = length;
@@ -26,6 +29,8 @@ public class InventoryItem {
         this.lot = lot;
         this.mfgDate = mfgDate;
         this.expDate = expDate;
+        this.addedTime = System.currentTimeMillis();
+        this.removedTime = 0;
     }
 
     public int getId() { return id; }
@@ -50,4 +55,10 @@ public class InventoryItem {
 
     public String getExpDate() { return expDate; }
     public void setExpDate(String expDate) { this.expDate = expDate; }
+
+    public long getAddedTime() { return addedTime; }
+    public void setAddedTime(long addedTime) { this.addedTime = addedTime; }
+
+    public long getRemovedTime() { return removedTime; }
+    public void setRemovedTime(long removedTime) { this.removedTime = removedTime; }
 }

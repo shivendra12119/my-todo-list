@@ -107,16 +107,15 @@ public class InventoryActivity extends AppCompatActivity {
     }
 
     private void showDetailsDialog(InventoryAdapter.InventoryDisplayItem item) {
-        // Fetch all packets for this size to show details
-        List<InventoryItem> packets = db.inventoryDao().getAllPacketsForSize(item.diameter, item.length);
+        List<InventoryItem> packets = db.inventoryDao().getAllActivePacketsForSize(item.diameter, item.length);
         
         StringBuilder message = new StringBuilder();
         message.append("Total Quantity: ").append(item.quantity).append("\n\n");
         message.append("Packets:\n");
         
         for (InventoryItem p : packets) {
-            message.append("- LOT: ").append(p.getLot().isEmpty() ? "N/A" : p.getLot())
-                   .append(", EXP: ").append(p.getExpDate().isEmpty() ? "N/A" : p.getExpDate())
+            message.append("- LOT: ").append(p.getLot() == null || p.getLot().isEmpty() ? "N/A" : p.getLot())
+                   .append(", EXP: ").append(p.getExpDate() == null || p.getExpDate().isEmpty() ? "N/A" : p.getExpDate())
                    .append("\n");
         }
 
@@ -141,12 +140,12 @@ public class InventoryActivity extends AppCompatActivity {
         } else if (item.getItemId() == R.id.action_clear_inventory) {
             new AlertDialog.Builder(this)
                     .setTitle("Clear All Data")
-                    .setMessage("Are you sure you want to delete the entire inventory?")
-                    .setPositiveButton("Delete All", (dialog, which) -> {
-                        db.inventoryDao().deleteAll();
+                    .setMessage("Are you sure you want to clear the entire inventory?")
+                    .setPositiveButton("Clear All", (dialog, which) -> {
+                        db.inventoryDao().softDeleteAll(System.currentTimeMillis());
                         refreshInventoryList();
                         textViewResult.setText(R.string.extracted_size_none);
-                        Toast.makeText(this, "Inventory cleared", Toast.LENGTH_SHORT).show();
+                        Toast.makeText(this, "Inventory cleared (Soft Deleted)", Toast.LENGTH_SHORT).show();
                     })
                     .setNegativeButton("Cancel", null)
                     .show();
@@ -177,15 +176,14 @@ public class InventoryActivity extends AppCompatActivity {
         }
 
         List<String> refs = new ArrayList<>();
-        // More flexible REF: allows any digits and dots, handles accidental spaces
         Pattern refPattern = Pattern.compile("REF\\s*([\\d\\s.]+)", Pattern.CASE_INSENSITIVE);
         Matcher refMatcher = refPattern.matcher(text);
         while (refMatcher.find()) {
-            refs.add(refMatcher.group(1).replaceAll("\\s+", ""));
+            String refVal = refMatcher.group(1);
+            if (refVal != null) refs.add(refVal.replaceAll("\\s+", ""));
         }
 
         List<String> lots = new ArrayList<>();
-        // More flexible LOT: handles 5 alphanumeric characters (e.g., FKXP8, NGR10)
         Pattern lotPattern = Pattern.compile("LOT\\s*([A-Z0-9]{5})", Pattern.CASE_INSENSITIVE);
         Matcher lotMatcher = lotPattern.matcher(text);
         while (lotMatcher.find()) {
@@ -230,23 +228,25 @@ public class InventoryActivity extends AppCompatActivity {
         if (change > 0) {
             db.inventoryDao().insert(new InventoryItem(dia, len, ref, lot, mfg, exp));
         } else {
-            InventoryItem toRemove = db.inventoryDao().findOldestStock(dia, len);
+            InventoryItem toRemove = db.inventoryDao().findOldestActiveStock(dia, len);
             if (toRemove != null) {
-                db.inventoryDao().delete(toRemove);
+                toRemove.setRemovedTime(System.currentTimeMillis());
+                db.inventoryDao().update(toRemove);
             } else {
-                Toast.makeText(this, "Size " + dia + "X" + len + " not found.", Toast.LENGTH_SHORT).show();
+                Toast.makeText(this, "Active stock for " + dia + "X" + len + " not found.", Toast.LENGTH_SHORT).show();
             }
         }
     }
 
     private void refreshInventoryList() {
-        List<InventoryItem> allItems = db.inventoryDao().getAll();
+        List<InventoryItem> allActive = db.inventoryDao().getAllActive();
         Map<String, InventoryAdapter.InventoryDisplayItem> aggregatedMap = new LinkedHashMap<>();
         
-        for (InventoryItem item : allItems) {
+        for (InventoryItem item : allActive) {
             String key = item.getDiameter() + "X" + item.getLength();
             if (aggregatedMap.containsKey(key)) {
-                aggregatedMap.get(key).quantity += 1;
+                InventoryAdapter.InventoryDisplayItem displayItem = aggregatedMap.get(key);
+                if (displayItem != null) displayItem.quantity += 1;
             } else {
                 aggregatedMap.put(key, new InventoryAdapter.InventoryDisplayItem(item.getDiameter(), item.getLength(), 1));
             }
