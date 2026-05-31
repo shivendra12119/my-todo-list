@@ -2,6 +2,7 @@ package com.shivednra.mytodolist;
 
 import android.net.Uri;
 import android.os.Bundle;
+import android.text.InputType;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.widget.Button;
@@ -12,6 +13,7 @@ import android.widget.Toast;
 import androidx.annotation.NonNull;
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
+import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
 import androidx.core.graphics.Insets;
@@ -68,7 +70,7 @@ public class MainActivity extends AppCompatActivity {
         recyclerViewTasks = findViewById(R.id.recyclerViewTasks);
 
         inventoryList = db.inventoryDao().getAll();
-        adapter = new InventoryAdapter(inventoryList);
+        adapter = new InventoryAdapter(inventoryList, item -> showEditDialog(item));
 
         recyclerViewTasks.setLayoutManager(new LinearLayoutManager(this));
         recyclerViewTasks.setAdapter(adapter);
@@ -76,9 +78,7 @@ public class MainActivity extends AppCompatActivity {
         buttonAdd.setOnClickListener(v -> {
             String input = editTextTask.getText().toString().trim();
             if (!input.isEmpty()) {
-                String cleanInput = normalizeManualInput(input);
-                performUpdate(cleanInput, 1);
-                refreshInventoryList();
+                manualInputProcessing(input);
                 editTextTask.setText("");
             }
         });
@@ -93,14 +93,49 @@ public class MainActivity extends AppCompatActivity {
         buttonUploadPhoto.setOnClickListener(v -> mGetContent.launch("image/*"));
     }
 
-    private String normalizeManualInput(String input) {
-        // If it matches the pattern, extract only the numbers and X
+    private void manualInputProcessing(String input) {
         Pattern p = Pattern.compile("(\\d+(?:\\.\\d+)?)\\s*[xX]\\s*(\\d+(?:\\.\\d+)?)");
         Matcher m = p.matcher(input);
         if (m.find()) {
-            return m.group(1) + "X" + m.group(2);
+            performUpdate(m.group(1), m.group(2), 1);
+            refreshInventoryList();
+        } else {
+            Toast.makeText(this, "Invalid format. Use: DiameterXLength", Toast.LENGTH_SHORT).show();
         }
-        return input.toUpperCase().replaceAll("\\s+", "");
+    }
+
+    private void showEditDialog(InventoryItem item) {
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        builder.setTitle("Edit Qty: " + item.getDiameter() + " X " + item.getLength());
+
+        final EditText input = new EditText(this);
+        input.setInputType(InputType.TYPE_CLASS_NUMBER);
+        input.setText(String.valueOf(item.getQuantity()));
+        builder.setView(input);
+
+        builder.setPositiveButton("Update", (dialog, which) -> {
+            String newQtyStr = input.getText().toString();
+            if (!newQtyStr.isEmpty()) {
+                int newQty = Integer.parseInt(newQtyStr);
+                showConfirmationDialog(item, newQty);
+            }
+        });
+        builder.setNegativeButton("Cancel", (dialog, which) -> dialog.cancel());
+
+        builder.show();
+    }
+
+    private void showConfirmationDialog(InventoryItem item, int newQty) {
+        new AlertDialog.Builder(this)
+                .setTitle("Confirm Change")
+                .setMessage("Change " + item.getDiameter() + " X " + item.getLength() + " quantity to " + newQty + "?")
+                .setPositiveButton("Confirm", (dialog, which) -> {
+                    item.setQuantity(newQty);
+                    db.inventoryDao().update(item);
+                    refreshInventoryList();
+                })
+                .setNegativeButton("Cancel", null)
+                .show();
     }
 
     @Override
@@ -112,10 +147,17 @@ public class MainActivity extends AppCompatActivity {
     @Override
     public boolean onOptionsItemSelected(@NonNull MenuItem item) {
         if (item.getItemId() == 1) {
-            db.clearAllTables();
-            refreshInventoryList();
-            textViewResult.setText(R.string.extracted_size_none);
-            Toast.makeText(this, "Inventory cleared", Toast.LENGTH_SHORT).show();
+            new AlertDialog.Builder(this)
+                    .setTitle("Clear All Data")
+                    .setMessage("Are you sure you want to delete the entire inventory?")
+                    .setPositiveButton("Delete All", (dialog, which) -> {
+                        db.clearAllTables();
+                        refreshInventoryList();
+                        textViewResult.setText(R.string.extracted_size_none);
+                        Toast.makeText(this, "Inventory cleared", Toast.LENGTH_SHORT).show();
+                    })
+                    .setNegativeButton("Cancel", null)
+                    .show();
             return true;
         }
         return super.onOptionsItemSelected(item);
@@ -143,11 +185,11 @@ public class MainActivity extends AppCompatActivity {
         StringBuilder foundSizes = new StringBuilder();
 
         while (matcher.find()) {
-            // Construct clean format: "NUMBERXNUMBER"
-            String size = matcher.group(1) + "X" + matcher.group(2);
-            performUpdate(size, change);
+            String diameter = matcher.group(1);
+            String length = matcher.group(2);
+            performUpdate(diameter, length, change);
             if (count > 0) foundSizes.append(", ");
-            foundSizes.append(size);
+            foundSizes.append(diameter).append("X").append(length);
             count++;
         }
 
@@ -161,16 +203,16 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-    private void performUpdate(String size, int change) {
-        InventoryItem existingItem = db.inventoryDao().findBySize(size);
+    private void performUpdate(String diameter, String length, int change) {
+        InventoryItem existingItem = db.inventoryDao().findItem(diameter, length);
         if (existingItem != null) {
             int newQty = Math.max(0, existingItem.getQuantity() + change);
             existingItem.setQuantity(newQty);
             db.inventoryDao().update(existingItem);
         } else if (change > 0) {
-            db.inventoryDao().insert(new InventoryItem(size, change));
+            db.inventoryDao().insert(new InventoryItem(diameter, length, change));
         } else {
-            Toast.makeText(this, "Size " + size + " not found to reduce.", Toast.LENGTH_SHORT).show();
+            Toast.makeText(this, "Size " + diameter + "X" + length + " not found to reduce.", Toast.LENGTH_SHORT).show();
         }
     }
 

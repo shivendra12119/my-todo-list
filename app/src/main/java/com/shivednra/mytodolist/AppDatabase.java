@@ -5,7 +5,7 @@ import androidx.room.Database;
 import androidx.room.Room;
 import androidx.room.RoomDatabase;
 
-@Database(entities = {InventoryItem.class}, version = 1)
+@Database(entities = {InventoryItem.class}, version = 2)
 public abstract class AppDatabase extends RoomDatabase {
     public abstract InventoryDao inventoryDao();
 
@@ -18,6 +18,7 @@ public abstract class AppDatabase extends RoomDatabase {
                     INSTANCE = Room.databaseBuilder(context.getApplicationContext(),
                                     AppDatabase.class, "inventory_database")
                             .allowMainThreadQueries() // Only for simplicity in this example
+                            .fallbackToDestructiveMigration()
                             .build();
                 }
             }

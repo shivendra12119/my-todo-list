@@ -11,9 +11,15 @@ import java.util.List;
 public class InventoryAdapter extends RecyclerView.Adapter<InventoryAdapter.InventoryViewHolder> {
 
     private List<InventoryItem> inventoryList;
+    private OnItemClickListener listener;
 
-    public InventoryAdapter(List<InventoryItem> inventoryList) {
+    public interface OnItemClickListener {
+        void onItemClick(InventoryItem item);
+    }
+
+    public InventoryAdapter(List<InventoryItem> inventoryList, OnItemClickListener listener) {
         this.inventoryList = inventoryList;
+        this.listener = listener;
     }
 
     @NonNull
@@ -26,8 +32,14 @@ public class InventoryAdapter extends RecyclerView.Adapter<InventoryAdapter.Inve
     @Override
     public void onBindViewHolder(@NonNull InventoryViewHolder holder, int position) {
         InventoryItem item = inventoryList.get(position);
-        holder.textViewSize.setText(item.getSize());
+        holder.textViewSize.setText(item.getDiameter() + " X " + item.getLength());
         holder.textViewQuantity.setText("Qty: " + item.getQuantity());
+        
+        holder.itemView.setOnClickListener(v -> {
+            if (listener != null) {
+                listener.onItemClick(item);
+            }
+        });
     }
 
     @Override

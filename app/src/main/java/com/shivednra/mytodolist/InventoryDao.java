@@ -10,11 +10,11 @@ import java.util.List;
 
 @Dao
 public interface InventoryDao {
-    @Query("SELECT * FROM inventory_items")
+    @Query("SELECT * FROM inventory_items ORDER BY diameter ASC, length ASC")
     List<InventoryItem> getAll();
 
-    @Query("SELECT * FROM inventory_items WHERE size = :size LIMIT 1")
-    InventoryItem findBySize(String size);
+    @Query("SELECT * FROM inventory_items WHERE diameter = :diameter AND length = :length LIMIT 1")
+    InventoryItem findItem(String diameter, String length);
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     void insert(InventoryItem item);
