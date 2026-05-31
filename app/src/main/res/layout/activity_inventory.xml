@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
-    android:id="@+id/main"
+    android:id="@+id/main_inventory"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical">
@@ -11,7 +11,6 @@
         android:layout_width="match_parent"
         android:layout_height="?attr/actionBarSize"
         android:background="?attr/colorPrimary"
-        app:title="@string/app_name"
         app:titleTextColor="@android:color/white" />
 
     <LinearLayout
@@ -21,11 +20,11 @@
         android:padding="16dp">
 
         <EditText
-            android:id="@+id/editTextTask"
+            android:id="@+id/editTextSize"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:hint="@string/hint_enter_task"
+            android:hint="@string/hint_diameter_length"
             android:inputType="text" />
 
         <Button
@@ -52,7 +51,7 @@
                 android:id="@+id/radioAdd"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Add Inventory"
+                android:text="@string/radio_add"
                 android:checked="true" />
 
             <RadioButton
@@ -60,7 +59,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginStart="16dp"
-                android:text="Reduce Inventory" />
+                android:text="@string/radio_reduce" />
         </RadioGroup>
 
         <Button
@@ -76,13 +75,13 @@
             android:layout_height="wrap_content"
             android:layout_marginTop="8dp"
             android:text="@string/extracted_size_none"
-            android:textSize="16sp"
+            android:textSize="14sp"
             android:textStyle="bold"
             android:textColor="@color/purple_700" />
     </LinearLayout>
 
     <androidx.recyclerview.widget.RecyclerView
-        android:id="@+id/recyclerViewTasks"
+        android:id="@+id/recyclerViewInventory"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:paddingHorizontal="16dp" />

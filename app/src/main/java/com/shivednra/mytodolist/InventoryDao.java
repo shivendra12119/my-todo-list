@@ -21,4 +21,7 @@ public interface InventoryDao {
 
     @Update
     void update(InventoryItem item);
+
+    @Query("DELETE FROM inventory_items")
+    void deleteAll();
 }

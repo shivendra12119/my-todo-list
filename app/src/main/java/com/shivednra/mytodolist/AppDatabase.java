@@ -5,9 +5,10 @@ import androidx.room.Database;
 import androidx.room.Room;
 import androidx.room.RoomDatabase;
 
-@Database(entities = {InventoryItem.class}, version = 2)
+@Database(entities = {InventoryItem.class, TodoItem.class}, version = 3)
 public abstract class AppDatabase extends RoomDatabase {
     public abstract InventoryDao inventoryDao();
+    public abstract TodoDao todoDao();
 
     private static volatile AppDatabase INSTANCE;
 
@@ -16,8 +17,8 @@ public abstract class AppDatabase extends RoomDatabase {
             synchronized (AppDatabase.class) {
                 if (INSTANCE == null) {
                     INSTANCE = Room.databaseBuilder(context.getApplicationContext(),
-                                    AppDatabase.class, "inventory_database")
-                            .allowMainThreadQueries() // Only for simplicity in this example
+                                    AppDatabase.class, "app_database")
+                            .allowMainThreadQueries()
                             .fallbackToDestructiveMigration()
                             .build();
                 }

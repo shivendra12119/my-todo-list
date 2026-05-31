@@ -32,14 +32,14 @@ import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-public class MainActivity extends AppCompatActivity {
+public class InventoryActivity extends AppCompatActivity {
 
-    private EditText editTextTask;
+    private EditText editTextSize;
     private Button buttonAdd;
     private Button buttonUploadPhoto;
     private RadioButton radioAdd;
     private TextView textViewResult;
-    private RecyclerView recyclerViewTasks;
+    private RecyclerView recyclerViewInventory;
     private InventoryAdapter adapter;
     private List<InventoryItem> inventoryList;
     private AppDatabase db;
@@ -49,37 +49,41 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_main);
+        setContentView(R.layout.activity_inventory);
 
         db = AppDatabase.getDatabase(this);
 
         Toolbar toolbar = findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
+        if (getSupportActionBar() != null) {
+            getSupportActionBar().setDisplayHomeAsUpEnabled(true);
+            getSupportActionBar().setTitle("Inventory Management");
+        }
 
-        ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main), (v, insets) -> {
+        ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main_inventory), (v, insets) -> {
             Insets systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars());
             v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom);
             return insets;
         });
 
-        editTextTask = findViewById(R.id.editTextTask);
+        editTextSize = findViewById(R.id.editTextSize);
         buttonAdd = findViewById(R.id.buttonAdd);
         buttonUploadPhoto = findViewById(R.id.buttonUploadPhoto);
         radioAdd = findViewById(R.id.radioAdd);
         textViewResult = findViewById(R.id.textViewResult);
-        recyclerViewTasks = findViewById(R.id.recyclerViewTasks);
+        recyclerViewInventory = findViewById(R.id.recyclerViewInventory);
 
         inventoryList = db.inventoryDao().getAll();
-        adapter = new InventoryAdapter(inventoryList, item -> showEditDialog(item));
+        adapter = new InventoryAdapter(inventoryList, this::showEditDialog);
 
-        recyclerViewTasks.setLayoutManager(new LinearLayoutManager(this));
-        recyclerViewTasks.setAdapter(adapter);
+        recyclerViewInventory.setLayoutManager(new LinearLayoutManager(this));
+        recyclerViewInventory.setAdapter(adapter);
 
         buttonAdd.setOnClickListener(v -> {
-            String input = editTextTask.getText().toString().trim();
+            String input = editTextSize.getText().toString().trim();
             if (!input.isEmpty()) {
                 manualInputProcessing(input);
-                editTextTask.setText("");
+                editTextSize.setText("");
             }
         });
 
@@ -116,8 +120,12 @@ public class MainActivity extends AppCompatActivity {
         builder.setPositiveButton("Update", (dialog, which) -> {
             String newQtyStr = input.getText().toString();
             if (!newQtyStr.isEmpty()) {
-                int newQty = Integer.parseInt(newQtyStr);
-                showConfirmationDialog(item, newQty);
+                try {
+                    int newQty = Integer.parseInt(newQtyStr);
+                    showConfirmationDialog(item, newQty);
+                } catch (NumberFormatException e) {
+                    Toast.makeText(this, "Invalid quantity", Toast.LENGTH_SHORT).show();
+                }
             }
         });
         builder.setNegativeButton("Cancel", (dialog, which) -> dialog.cancel());
@@ -140,17 +148,21 @@ public class MainActivity extends AppCompatActivity {
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
-        menu.add(0, 1, 0, "Clear All Data");
+        getMenuInflater().inflate(R.menu.menu_inventory, menu);
         return true;
     }
 
     @Override
     public boolean onOptionsItemSelected(@NonNull MenuItem item) {
-        if (item.getItemId() == 1) {
+        if (item.getItemId() == android.R.id.home) {
+            finish();
+            return true;
+        } else if (item.getItemId() == R.id.action_clear_inventory) {
             new AlertDialog.Builder(this)
                     .setTitle("Clear All Data")
                     .setMessage("Are you sure you want to delete the entire inventory?")
                     .setPositiveButton("Delete All", (dialog, which) -> {
+                        db.inventoryDao().deleteAll(); // Need to add this to DAO or use clearAllTables
                         db.clearAllTables();
                         refreshInventoryList();
                         textViewResult.setText(R.string.extracted_size_none);
@@ -170,7 +182,7 @@ public class MainActivity extends AppCompatActivity {
 
             recognizer.process(image)
                     .addOnSuccessListener(visionText -> extractSize(visionText.getText()))
-                    .addOnFailureListener(e -> Toast.makeText(MainActivity.this, getString(R.string.msg_failed_recognize), Toast.LENGTH_SHORT).show());
+                    .addOnFailureListener(e -> Toast.makeText(this, getString(R.string.msg_failed_recognize), Toast.LENGTH_SHORT).show());
         } catch (IOException e) {
             e.printStackTrace();
         }

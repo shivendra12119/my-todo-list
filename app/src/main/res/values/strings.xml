@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">MyTodoList</string>
+    <string name="app_name">My Management App</string>
     <string name="hint_enter_task">Enter task</string>
     <string name="button_add">Add</string>
     <string name="button_upload_photo">Upload Photo &amp; Extract Size</string>
@@ -9,4 +9,15 @@
     <string name="extracted_size_not_found">Extracted Size: Not found</string>
     <string name="msg_failed_recognize">Failed to recognize text</string>
     <string name="msg_not_found">Could not find size in the image</string>
+
+    <string name="module_select">Select Module</string>
+    <string name="module_todo">Todo List</string>
+    <string name="module_todo_desc">Manage your daily tasks</string>
+    <string name="module_inventory">Inventory Management</string>
+    <string name="module_inventory_desc">Track items via Photo/Scan</string>
+    <string name="hint_diameter_length">DiameterXLength</string>
+    <string name="radio_add">Add</string>
+    <string name="radio_reduce">Reduce</string>
+    <string name="hint_todo">Enter a new task</string>
+    <string name="action_clear">Clear All Data</string>
 </resources>
