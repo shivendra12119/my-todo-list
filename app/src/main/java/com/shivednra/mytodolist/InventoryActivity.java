@@ -69,6 +69,7 @@ public class InventoryActivity extends AppCompatActivity {
 
         editTextSize = findViewById(R.id.editTextSize);
         Button buttonAdd = findViewById(R.id.buttonAdd);
+        Button buttonManualEntry = findViewById(R.id.buttonManualEntry);
         buttonUploadPhoto = findViewById(R.id.buttonUploadPhoto);
         radioAdd = findViewById(R.id.radioAdd);
         textViewResult = findViewById(R.id.textViewResult);
@@ -84,6 +85,8 @@ public class InventoryActivity extends AppCompatActivity {
                 editTextSize.setText("");
             }
         });
+
+        buttonManualEntry.setOnClickListener(v -> showManualEntryDialog());
 
         mGetContent = registerForActivityResult(new ActivityResultContracts.GetContent(),
                 uri -> {
@@ -104,6 +107,57 @@ public class InventoryActivity extends AppCompatActivity {
         } else {
             Toast.makeText(this, "Invalid format. Use: DiameterXLength", Toast.LENGTH_SHORT).show();
         }
+    }
+
+    private void showManualEntryDialog() {
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        builder.setTitle(R.string.manual_entry_title);
+
+        android.widget.LinearLayout layout = new android.widget.LinearLayout(this);
+        layout.setOrientation(android.widget.LinearLayout.VERTICAL);
+        layout.setPadding(50, 20, 50, 20);
+
+        final EditText inputSize = new EditText(this);
+        inputSize.setHint(R.string.hint_diameter_length);
+        layout.addView(inputSize);
+
+        final EditText inputRef = new EditText(this);
+        inputRef.setHint(R.string.hint_ref);
+        layout.addView(inputRef);
+
+        final EditText inputLot = new EditText(this);
+        inputLot.setHint(R.string.hint_lot);
+        layout.addView(inputLot);
+
+        final EditText inputMfg = new EditText(this);
+        inputMfg.setHint(R.string.hint_mfg);
+        layout.addView(inputMfg);
+
+        final EditText inputExp = new EditText(this);
+        inputExp.setHint(R.string.hint_exp);
+        layout.addView(inputExp);
+
+        builder.setView(layout);
+
+        builder.setPositiveButton(R.string.button_add, (dialog, which) -> {
+            String sizeStr = inputSize.getText().toString().trim();
+            Pattern p = Pattern.compile("(\\d+(?:\\.\\d+)?)\\s*[xX]\\s*(\\d+(?:\\.\\d+)?)");
+            Matcher m = p.matcher(sizeStr);
+            
+            if (m.find()) {
+                performUpdate(m.group(1), m.group(2), 
+                        inputRef.getText().toString().trim(),
+                        inputLot.getText().toString().trim(),
+                        inputMfg.getText().toString().trim(),
+                        inputExp.getText().toString().trim(), 1);
+                refreshInventoryList();
+            } else {
+                Toast.makeText(this, "Invalid Size format", Toast.LENGTH_SHORT).show();
+            }
+        });
+        builder.setNegativeButton("Cancel", (dialog, which) -> dialog.cancel());
+
+        builder.show();
     }
 
     private void showDetailsDialog(InventoryAdapter.InventoryDisplayItem item) {

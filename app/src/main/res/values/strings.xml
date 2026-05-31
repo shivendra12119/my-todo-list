@@ -20,4 +20,10 @@
     <string name="radio_reduce">Reduce</string>
     <string name="hint_todo">Enter a new task</string>
     <string name="action_clear">Clear All Data</string>
+    <string name="manual_entry_title">Manual Packet Entry</string>
+    <string name="hint_ref">REF (e.g. 140.949)</string>
+    <string name="hint_lot">LOT (e.g. FKXP8)</string>
+    <string name="hint_mfg">MFG Date (YYYY-MM-DD)</string>
+    <string name="hint_exp">EXP Date (YYYY-MM-DD)</string>
+    <string name="button_manual_entry">Manual Entry</string>
 </resources>
