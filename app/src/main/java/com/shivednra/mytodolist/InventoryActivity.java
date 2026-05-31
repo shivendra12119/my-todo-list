@@ -4,9 +4,9 @@ import android.net.Uri;
 import android.os.Bundle;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
-import android.widget.RadioButton;
 import android.widget.TextView;
 import android.widget.Toast;
 import androidx.annotation.NonNull;
@@ -21,6 +21,7 @@ import androidx.core.view.WindowInsetsCompat;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.google.android.material.tabs.TabLayout;
 import com.google.mlkit.vision.common.InputImage;
 import com.google.mlkit.vision.text.TextRecognition;
 import com.google.mlkit.vision.text.TextRecognizer;
@@ -28,14 +29,16 @@ import com.google.mlkit.vision.text.latin.TextRecognizerOptions;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class InventoryActivity extends AppCompatActivity {
 
-    private Button buttonUploadPhoto;
-    private RadioButton radioAdd;
+    private TabLayout tabLayout;
+    private View layoutButtons;
+    private Button buttonManualEntry;
     private TextView textViewResult;
     private RecyclerView recyclerViewInventory;
     private InventoryAdapter adapter;
@@ -64,13 +67,27 @@ public class InventoryActivity extends AppCompatActivity {
             return insets;
         });
 
-        Button buttonManualEntry = findViewById(R.id.buttonManualEntry);
-        buttonUploadPhoto = findViewById(R.id.buttonUploadPhoto);
-        radioAdd = findViewById(R.id.radioAdd);
+        tabLayout = findViewById(R.id.tabLayout);
+        layoutButtons = findViewById(R.id.layoutButtons);
+        buttonManualEntry = findViewById(R.id.buttonManualEntry);
+        Button buttonUploadPhoto = findViewById(R.id.buttonUploadPhoto);
         textViewResult = findViewById(R.id.textViewResult);
         recyclerViewInventory = findViewById(R.id.recyclerViewInventory);
 
         recyclerViewInventory.setLayoutManager(new LinearLayoutManager(this));
+        
+        tabLayout.addOnTabSelectedListener(new TabLayout.OnTabSelectedListener() {
+            @Override
+            public void onTabSelected(TabLayout.Tab tab) {
+                refreshInventoryList();
+                updateUIForTab(tab.getPosition());
+            }
+            @Override
+            public void onTabUnselected(TabLayout.Tab tab) {}
+            @Override
+            public void onTabReselected(TabLayout.Tab tab) {}
+        });
+
         refreshInventoryList();
 
         buttonManualEntry.setOnClickListener(v -> showManualEntryDialog());
@@ -83,6 +100,17 @@ public class InventoryActivity extends AppCompatActivity {
                 });
 
         buttonUploadPhoto.setOnClickListener(v -> mGetContent.launch("image/*"));
+    }
+
+    private void updateUIForTab(int position) {
+        if (position == 0) { // Stock
+            layoutButtons.setVisibility(View.GONE);
+            textViewResult.setVisibility(View.GONE);
+        } else { // Add or Remove
+            layoutButtons.setVisibility(View.VISIBLE);
+            textViewResult.setVisibility(View.VISIBLE);
+            buttonManualEntry.setVisibility(position == 1 ? View.VISIBLE : View.GONE);
+        }
     }
 
     private void showManualEntryDialog() {
@@ -222,7 +250,7 @@ public class InventoryActivity extends AppCompatActivity {
         }
 
         int count = sizes.size();
-        int change = radioAdd.isChecked() ? 1 : -1;
+        int change = tabLayout.getSelectedTabPosition() == 1 ? 1 : -1;
         StringBuilder summary = new StringBuilder();
 
         for (int i = 0; i < count; i++) {
@@ -263,7 +291,24 @@ public class InventoryActivity extends AppCompatActivity {
     }
 
     private void refreshInventoryList() {
-        inventoryList = db.inventoryDao().getAllActive();
+        int tabPosition = tabLayout.getSelectedTabPosition();
+        
+        // Calculate the start of today for activity logs
+        Calendar cal = Calendar.getInstance();
+        cal.set(Calendar.HOUR_OF_DAY, 0);
+        cal.set(Calendar.MINUTE, 0);
+        cal.set(Calendar.SECOND, 0);
+        cal.set(Calendar.MILLISECOND, 0);
+        long todayStart = cal.getTimeInMillis();
+
+        if (tabPosition == 0) {
+            inventoryList = db.inventoryDao().getAllActive();
+        } else if (tabPosition == 1) {
+            inventoryList = db.inventoryDao().getRecentAdds(todayStart);
+        } else {
+            inventoryList = db.inventoryDao().getRecentRemoves(todayStart);
+        }
+
         if (adapter == null) {
             adapter = new InventoryAdapter(inventoryList, this::showDetailsDialog);
             recyclerViewInventory.setAdapter(adapter);

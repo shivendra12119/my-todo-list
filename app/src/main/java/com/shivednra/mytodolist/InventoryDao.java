@@ -16,8 +16,11 @@ public interface InventoryDao {
     @Query("SELECT * FROM inventory_items WHERE diameter = :diameter AND length = :length AND removedTime = 0 ORDER BY expDate ASC LIMIT 1")
     InventoryItem findOldestActiveStock(String diameter, String length);
 
-    @Query("SELECT * FROM inventory_items WHERE diameter = :diameter AND length = :length AND removedTime = 0 ORDER BY expDate ASC")
-    List<InventoryItem> getAllActivePacketsForSize(String diameter, String length);
+    @Query("SELECT * FROM inventory_items WHERE addedTime >= :since ORDER BY addedTime DESC")
+    List<InventoryItem> getRecentAdds(long since);
+
+    @Query("SELECT * FROM inventory_items WHERE removedTime >= :since ORDER BY removedTime DESC")
+    List<InventoryItem> getRecentRemoves(long since);
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     void insert(InventoryItem item);
