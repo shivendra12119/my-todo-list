@@ -10,14 +10,27 @@ import java.util.List;
 
 public class InventoryAdapter extends RecyclerView.Adapter<InventoryAdapter.InventoryViewHolder> {
 
-    private List<InventoryItem> inventoryList;
+    private List<InventoryDisplayItem> inventoryList;
     private OnItemClickListener listener;
 
     public interface OnItemClickListener {
-        void onItemClick(InventoryItem item);
+        void onItemClick(InventoryDisplayItem item);
     }
 
-    public InventoryAdapter(List<InventoryItem> inventoryList, OnItemClickListener listener) {
+    // Helper class for UI display
+    public static class InventoryDisplayItem {
+        public String diameter;
+        public String length;
+        public int quantity;
+
+        public InventoryDisplayItem(String diameter, String length, int quantity) {
+            this.diameter = diameter;
+            this.length = length;
+            this.quantity = quantity;
+        }
+    }
+
+    public InventoryAdapter(List<InventoryDisplayItem> inventoryList, OnItemClickListener listener) {
         this.inventoryList = inventoryList;
         this.listener = listener;
     }
@@ -31,9 +44,9 @@ public class InventoryAdapter extends RecyclerView.Adapter<InventoryAdapter.Inve
 
     @Override
     public void onBindViewHolder(@NonNull InventoryViewHolder holder, int position) {
-        InventoryItem item = inventoryList.get(position);
-        holder.textViewSize.setText(item.getDiameter() + " X " + item.getLength());
-        holder.textViewQuantity.setText("Qty: " + item.getQuantity());
+        InventoryDisplayItem item = inventoryList.get(position);
+        holder.textViewSize.setText(item.diameter + " X " + item.length);
+        holder.textViewQuantity.setText("Qty: " + item.quantity);
         
         holder.itemView.setOnClickListener(v -> {
             if (listener != null) {
@@ -47,7 +60,7 @@ public class InventoryAdapter extends RecyclerView.Adapter<InventoryAdapter.Inve
         return inventoryList.size();
     }
 
-    public void updateList(List<InventoryItem> newList) {
+    public void updateList(List<InventoryDisplayItem> newList) {
         this.inventoryList = newList;
         notifyDataSetChanged();
     }
