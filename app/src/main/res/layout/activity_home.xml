@@ -8,6 +8,14 @@
     android:gravity="center"
     android:padding="24dp">
 
+    <ImageView
+        android:id="@+id/imageLogo"
+        android:layout_width="150dp"
+        android:layout_height="150dp"
+        android:src="@drawable/app_logo"
+        android:layout_marginBottom="24dp"
+        android:contentDescription="@string/app_logo_desc" />
+
     <TextView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
@@ -15,7 +23,7 @@
         android:textSize="28sp"
         android:textStyle="bold"
         android:textColor="@color/purple_700"
-        android:layout_marginBottom="48dp" />
+        android:layout_marginBottom="32dp" />
 
     <com.google.android.material.card.MaterialCardView
         android:id="@+id/cardTodo"

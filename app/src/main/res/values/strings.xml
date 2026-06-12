@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">My Management App</string>
+    <string name="app_name">Hi Smile</string>
     <string name="hint_enter_task">Enter task</string>
     <string name="button_add">Add</string>
     <string name="button_upload_photo">Upload Photo</string>
@@ -9,6 +9,7 @@
     <string name="extracted_size_not_found">Extracted Size: Not found</string>
     <string name="msg_failed_recognize">Failed to recognize text</string>
     <string name="msg_not_found">Could not find size in the image</string>
+    <string name="app_logo_desc">Hi Smile Logo</string>
 
     <string name="module_select">Select Module</string>
     <string name="module_todo">Todo List</string>
