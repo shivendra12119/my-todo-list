@@ -9,10 +9,14 @@ public class InventoryItem {
     @PrimaryKey(autoGenerate = true)
     private int id;
 
+    private String itemType; // "Implant" or "Abutment"
+
     @NonNull
     private String diameter;
     @NonNull
-    private String length;
+    private String length; // Also used for "Cementable Height" for Abutments
+
+    private String postHeight; // Only for Abutments
 
     private String ref;
     private String lot;
@@ -22,19 +26,24 @@ public class InventoryItem {
     private long addedTime;
     private long removedTime; // 0 if not removed
 
-    public InventoryItem(@NonNull String diameter, @NonNull String length, String ref, String lot, String mfgDate, String expDate) {
+    public InventoryItem(@NonNull String diameter, @NonNull String length, String postHeight, String ref, String lot, String mfgDate, String expDate, String itemType) {
         this.diameter = diameter;
         this.length = length;
+        this.postHeight = postHeight;
         this.ref = ref;
         this.lot = lot;
         this.mfgDate = mfgDate;
         this.expDate = expDate;
+        this.itemType = itemType;
         this.addedTime = System.currentTimeMillis();
         this.removedTime = 0;
     }
 
     public int getId() { return id; }
     public void setId(int id) { this.id = id; }
+
+    public String getItemType() { return itemType; }
+    public void setItemType(String itemType) { this.itemType = itemType; }
 
     @NonNull
     public String getDiameter() { return diameter; }
@@ -43,6 +52,9 @@ public class InventoryItem {
     @NonNull
     public String getLength() { return length; }
     public void setLength(@NonNull String length) { this.length = length; }
+
+    public String getPostHeight() { return postHeight; }
+    public void setPostHeight(String postHeight) { this.postHeight = postHeight; }
 
     public String getRef() { return ref; }
     public void setRef(String ref) { this.ref = ref; }

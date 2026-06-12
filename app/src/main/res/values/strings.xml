@@ -28,4 +28,7 @@
     <string name="hint_mfg">MFG Date (YYYY-MM-DD)</string>
     <string name="hint_exp">EXP Date (YYYY-MM-DD)</string>
     <string name="button_manual_entry">Manual Entry</string>
+    <string name="type_implant">Implant</string>
+    <string name="type_abutment">Abutment</string>
+    <string name="hint_dia_post_len">DiameterXCementableHeightXLength</string>
 </resources>

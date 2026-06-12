@@ -45,9 +45,12 @@ public class InventoryAdapter extends RecyclerView.Adapter<InventoryAdapter.Inve
             InventoryItem current = inventoryList.get(i);
             InventoryItem previous = inventoryList.get(i - 1);
 
-            // If size is different, flip the color
-            if (!current.getDiameter().equals(previous.getDiameter()) || 
-                !current.getLength().equals(previous.getLength())) {
+            // If size or type is different, flip the color
+            boolean sameSize = current.getDiameter().equals(previous.getDiameter()) && 
+                               current.getLength().equals(previous.getLength()) &&
+                               java.util.Objects.equals(current.getPostHeight(), previous.getPostHeight()) &&
+                               java.util.Objects.equals(current.getItemType(), previous.getItemType());
+            if (!sameSize) {
                 currentColorIndex = 1 - currentColorIndex;
             }
             backgroundColors.add(currentColorIndex);
@@ -64,7 +67,12 @@ public class InventoryAdapter extends RecyclerView.Adapter<InventoryAdapter.Inve
     @Override
     public void onBindViewHolder(@NonNull InventoryViewHolder holder, int position) {
         InventoryItem item = inventoryList.get(position);
-        holder.textViewSize.setText(item.getDiameter() + " X " + item.getLength());
+        String sizeText = item.getDiameter() + " X ";
+        if ("Abutment".equals(item.getItemType()) && item.getPostHeight() != null) {
+            sizeText += item.getPostHeight() + " X ";
+        }
+        sizeText += item.getLength();
+        holder.textViewSize.setText(sizeText);
         
         String rightText = "";
         if (mode == 0) { // Stock -> Show Expiry

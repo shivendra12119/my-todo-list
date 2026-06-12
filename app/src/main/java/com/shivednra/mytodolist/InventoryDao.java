@@ -13,8 +13,8 @@ public interface InventoryDao {
     @Query("SELECT * FROM inventory_items WHERE removedTime = 0 ORDER BY diameter ASC, length ASC, expDate ASC")
     List<InventoryItem> getAllActive();
 
-    @Query("SELECT * FROM inventory_items WHERE diameter = :diameter AND length = :length AND removedTime = 0 ORDER BY expDate ASC LIMIT 1")
-    InventoryItem findOldestActiveStock(String diameter, String length);
+    @Query("SELECT * FROM inventory_items WHERE diameter = :diameter AND length = :length AND itemType = :itemType AND (postHeight = :postHeight OR (postHeight IS NULL AND :postHeight IS NULL)) AND removedTime = 0 ORDER BY expDate ASC LIMIT 1")
+    InventoryItem findOldestActiveStock(String diameter, String length, String postHeight, String itemType);
 
     @Query("SELECT * FROM inventory_items WHERE addedTime >= :since ORDER BY addedTime DESC")
     List<InventoryItem> getRecentAdds(long since);

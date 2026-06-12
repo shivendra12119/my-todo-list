@@ -6,7 +6,10 @@ import android.os.Bundle;
 import android.os.Environment;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.view.View;
 import android.widget.EditText;
+import android.widget.RadioButton;
+import android.widget.RadioGroup;
 import android.widget.Toast;
 import androidx.annotation.NonNull;
 import androidx.activity.result.ActivityResultLauncher;
@@ -137,9 +140,30 @@ public class InventoryActivity extends AppCompatActivity {
         layout.setOrientation(android.widget.LinearLayout.VERTICAL);
         layout.setPadding(50, 20, 50, 20);
 
+        final RadioGroup typeGroup = new RadioGroup(this);
+        typeGroup.setOrientation(android.widget.LinearLayout.HORIZONTAL);
+        RadioButton rbImplant = new RadioButton(this);
+        rbImplant.setText(R.string.type_implant);
+        rbImplant.setId(View.generateViewId());
+        RadioButton rbAbutment = new RadioButton(this);
+        rbAbutment.setText(R.string.type_abutment);
+        rbAbutment.setId(View.generateViewId());
+        typeGroup.addView(rbImplant);
+        typeGroup.addView(rbAbutment);
+        rbImplant.setChecked(true);
+        layout.addView(typeGroup);
+
         final EditText inputSize = new EditText(this);
         inputSize.setHint(R.string.hint_diameter_length);
         layout.addView(inputSize);
+        
+        typeGroup.setOnCheckedChangeListener((group, checkedId) -> {
+            if (checkedId == rbImplant.getId()) {
+                inputSize.setHint(R.string.hint_diameter_length);
+            } else {
+                inputSize.setHint(R.string.hint_dia_post_len);
+            }
+        });
 
         final EditText inputRef = new EditText(this);
         inputRef.setHint(R.string.hint_ref);
@@ -161,15 +185,26 @@ public class InventoryActivity extends AppCompatActivity {
 
         builder.setPositiveButton(R.string.button_add, (dialog, which) -> {
             String sizeStr = inputSize.getText().toString().trim();
-            Pattern p = Pattern.compile("(\\d+(?:\\.\\d+)?)\\s*[xX]\\s*(\\d+(?:\\.\\d+)?)");
+            String type = rbImplant.isChecked() ? "Implant" : "Abutment";
+            
+            Pattern p = Pattern.compile("(\\d+(?:\\.\\d+)?)\\s*[xX]\\s*(\\d+(?:\\.\\d+)?)(?:\\s*[xX]\\s*(\\d+(?:\\.\\d+)?))?");
             Matcher m = p.matcher(sizeStr);
             
             if (m.find()) {
-                performUpdate(m.group(1), m.group(2), 
+                String dia = m.group(1);
+                String postHeight = null;
+                String length = m.group(2);
+                
+                if ("Abutment".equals(type) && m.group(3) != null) {
+                    postHeight = m.group(2);
+                    length = m.group(3);
+                }
+                
+                performUpdate(dia, length, postHeight, 
                         inputRef.getText().toString().trim(),
                         inputLot.getText().toString().trim(),
                         inputMfg.getText().toString().trim(),
-                        inputExp.getText().toString().trim(), 1, "MANUAL");
+                        inputExp.getText().toString().trim(), 1, "MANUAL", type);
             } else {
                 Toast.makeText(this, "Invalid Size format", Toast.LENGTH_SHORT).show();
             }
@@ -186,10 +221,36 @@ public class InventoryActivity extends AppCompatActivity {
         layout.setOrientation(android.widget.LinearLayout.VERTICAL);
         layout.setPadding(50, 20, 50, 20);
 
+        final RadioGroup typeGroup = new RadioGroup(this);
+        typeGroup.setOrientation(android.widget.LinearLayout.HORIZONTAL);
+        RadioButton rbImplant = new RadioButton(this);
+        rbImplant.setText(R.string.type_implant);
+        rbImplant.setId(View.generateViewId());
+        RadioButton rbAbutment = new RadioButton(this);
+        rbAbutment.setText(R.string.type_abutment);
+        rbAbutment.setId(View.generateViewId());
+        typeGroup.addView(rbImplant);
+        typeGroup.addView(rbAbutment);
+        if ("Abutment".equals(item.getItemType())) rbAbutment.setChecked(true);
+        else rbImplant.setChecked(true);
+        layout.addView(typeGroup);
+
         final EditText inputSize = new EditText(this);
-        inputSize.setHint(R.string.hint_diameter_length);
-        inputSize.setText(item.getDiameter() + "X" + item.getLength());
+        String currentSize = item.getDiameter() + "X";
+        if ("Abutment".equals(item.getItemType()) && item.getPostHeight() != null) {
+            currentSize += item.getPostHeight() + "X";
+        }
+        currentSize += item.getLength();
+        inputSize.setText(currentSize);
         layout.addView(inputSize);
+
+        typeGroup.setOnCheckedChangeListener((group, checkedId) -> {
+            if (checkedId == rbImplant.getId()) {
+                inputSize.setHint(R.string.hint_diameter_length);
+            } else {
+                inputSize.setHint(R.string.hint_dia_post_len);
+            }
+        });
 
         final EditText inputRef = new EditText(this);
         inputRef.setHint(R.string.hint_ref);
@@ -215,20 +276,32 @@ public class InventoryActivity extends AppCompatActivity {
 
         builder.setPositiveButton("Save", (dialog, which) -> {
             String sizeStr = inputSize.getText().toString().trim();
-            Pattern p = Pattern.compile("(\\d+(?:\\.\\d+)?)\\s*[xX]\\s*(\\d+(?:\\.\\d+)?)");
+            String type = rbImplant.isChecked() ? "Implant" : "Abutment";
+            Pattern p = Pattern.compile("(\\d+(?:\\.\\d+)?)\\s*[xX]\\s*(\\d+(?:\\.\\d+)?)(?:\\s*[xX]\\s*(\\d+(?:\\.\\d+)?))?");
             Matcher m = p.matcher(sizeStr);
             
             if (m.find()) {
                 long time = System.currentTimeMillis();
-                item.setDiameter(m.group(1));
-                item.setLength(m.group(2));
+                String dia = m.group(1);
+                String postHeight = null;
+                String length = m.group(2);
+                
+                if ("Abutment".equals(type) && m.group(3) != null) {
+                    postHeight = m.group(2);
+                    length = m.group(3);
+                }
+
+                item.setDiameter(dia);
+                item.setLength(length);
+                item.setPostHeight(postHeight);
+                item.setItemType(type);
                 item.setRef(inputRef.getText().toString().trim());
                 item.setLot(inputLot.getText().toString().trim());
                 item.setMfgDate(inputMfg.getText().toString().trim());
                 item.setExpDate(inputExp.getText().toString().trim());
                 
                 db.inventoryDao().update(item);
-                db.transactionDao().insert(new InventoryTransaction("EDITED", "MANUAL", time, item.getDiameter(), item.getLength(), item.getRef(), item.getLot()));
+                db.transactionDao().insert(new InventoryTransaction("EDITED", "MANUAL", type, time, dia, length, postHeight, item.getRef(), item.getLot()));
                 
                 refreshActiveFragment();
                 Toast.makeText(this, "Packet updated", Toast.LENGTH_SHORT).show();
@@ -244,7 +317,7 @@ public class InventoryActivity extends AppCompatActivity {
                     long time = System.currentTimeMillis();
                     item.setRemovedTime(time);
                     db.inventoryDao().update(item);
-                    db.transactionDao().insert(new InventoryTransaction("REMOVED", "MANUAL", time, item.getDiameter(), item.getLength(), item.getRef(), item.getLot()));
+                    db.transactionDao().insert(new InventoryTransaction("REMOVED", "MANUAL", item.getItemType(), time, item.getDiameter(), item.getLength(), item.getPostHeight(), item.getRef(), item.getLot()));
                     refreshActiveFragment();
                     Toast.makeText(this, "Packet removed", Toast.LENGTH_SHORT).show();
                 })
@@ -314,10 +387,14 @@ public class InventoryActivity extends AppCompatActivity {
 
     private void extractData(String text) {
         List<String[]> sizes = new ArrayList<>();
-        Pattern sizePattern = Pattern.compile("(\\d+(?:\\.\\d+)?)\\s*[xX]\\s*(\\d+(?:\\.\\d+)?)", Pattern.CASE_INSENSITIVE);
+        Pattern sizePattern = Pattern.compile("(\\d+(?:\\.\\d+)?)\\s*[xX]\\s*(\\d+(?:\\.\\d+)?)(?:\\s*[xX]\\s*(\\d+(?:\\.\\d+)?))?", Pattern.CASE_INSENSITIVE);
         Matcher sizeMatcher = sizePattern.matcher(text);
         while (sizeMatcher.find()) {
-            sizes.add(new String[]{sizeMatcher.group(1), sizeMatcher.group(2)});
+            if (sizeMatcher.group(3) != null) {
+                sizes.add(new String[]{sizeMatcher.group(1), sizeMatcher.group(2), sizeMatcher.group(3)}); // dia, post, len
+            } else {
+                sizes.add(new String[]{sizeMatcher.group(1), null, sizeMatcher.group(2)}); // dia, null, len
+            }
         }
 
         List<String> refs = new ArrayList<>();
@@ -349,15 +426,17 @@ public class InventoryActivity extends AppCompatActivity {
 
         for (int i = 0; i < count; i++) {
             String dia = sizes.get(i)[0];
-            String len = sizes.get(i)[1];
+            String postHeight = sizes.get(i)[1];
+            String len = sizes.get(i)[2];
             String ref = i < refs.size() ? refs.get(i) : "";
             String lot = i < lots.size() ? lots.get(i) : "";
             String mfg = (i * 2) < dates.size() ? dates.get(i * 2) : "";
             String exp = (i * 2 + 1) < dates.size() ? dates.get(i * 2 + 1) : "";
+            String type = postHeight != null ? "Abutment" : "Implant";
 
-            performUpdate(dia, len, ref, lot, mfg, exp, change, "SCAN");
+            performUpdate(dia, len, postHeight, ref, lot, mfg, exp, change, "SCAN", type);
             if (i > 0) summary.append(", ");
-            summary.append(dia).append("X").append(len);
+            summary.append(dia).append("X").append(postHeight != null ? postHeight + "X" : "").append(len);
         }
 
         if (count > 0) {
@@ -372,19 +451,20 @@ public class InventoryActivity extends AppCompatActivity {
         }
     }
 
-    private void performUpdate(String dia, String len, String ref, String lot, String mfg, String exp, int change, String method) {
+    private void performUpdate(String dia, String len, String postHeight, String ref, String lot, String mfg, String exp, int change, String method, String type) {
         long time = System.currentTimeMillis();
         if (change > 0) {
-            db.inventoryDao().insert(new InventoryItem(dia, len, ref, lot, mfg, exp));
-            db.transactionDao().insert(new InventoryTransaction("ADDED", method, time, dia, len, ref, lot));
+            db.inventoryDao().insert(new InventoryItem(dia, len, postHeight, ref, lot, mfg, exp, type));
+            db.transactionDao().insert(new InventoryTransaction("ADDED", method, type, time, dia, len, postHeight, ref, lot));
         } else {
-            InventoryItem toRemove = db.inventoryDao().findOldestActiveStock(dia, len);
+            InventoryItem toRemove = db.inventoryDao().findOldestActiveStock(dia, len, postHeight, type);
             if (toRemove != null) {
                 toRemove.setRemovedTime(time);
                 db.inventoryDao().update(toRemove);
-                db.transactionDao().insert(new InventoryTransaction("REMOVED", method, time, dia, len, toRemove.getRef(), toRemove.getLot()));
+                db.transactionDao().insert(new InventoryTransaction("REMOVED", method, type, time, dia, len, postHeight, toRemove.getRef(), toRemove.getLot()));
             } else {
-                Toast.makeText(this, "Active stock for " + dia + "X" + len + " not found.", Toast.LENGTH_SHORT).show();
+                String sizeLabel = dia + "X" + (postHeight != null ? postHeight + "X" : "") + len;
+                Toast.makeText(this, "Active stock for " + sizeLabel + " (" + type + ") not found.", Toast.LENGTH_SHORT).show();
             }
         }
         refreshActiveFragment();
