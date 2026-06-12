@@ -192,13 +192,8 @@ public class InventoryActivity extends AppCompatActivity {
             
             if (m.find()) {
                 String dia = m.group(1);
-                String postHeight = null;
-                String length = m.group(2);
-                
-                if ("Abutment".equals(type) && m.group(3) != null) {
-                    postHeight = m.group(2);
-                    length = m.group(3);
-                }
+                String postHeight = ("Abutment".equals(type) && m.group(3) != null) ? m.group(2) : null;
+                String length = ("Abutment".equals(type) && m.group(3) != null) ? m.group(3) : m.group(2);
                 
                 performUpdate(dia, length, postHeight, 
                         inputRef.getText().toString().trim(),
@@ -236,11 +231,9 @@ public class InventoryActivity extends AppCompatActivity {
         layout.addView(typeGroup);
 
         final EditText inputSize = new EditText(this);
-        String currentSize = item.getDiameter() + "X";
-        if ("Abutment".equals(item.getItemType()) && item.getPostHeight() != null) {
-            currentSize += item.getPostHeight() + "X";
-        }
-        currentSize += item.getLength();
+        String baseSize = item.getDiameter() + "X";
+        String midSize = ("Abutment".equals(item.getItemType()) && item.getPostHeight() != null) ? item.getPostHeight() + "X" : "";
+        String currentSize = baseSize + midSize + item.getLength();
         inputSize.setText(currentSize);
         layout.addView(inputSize);
 
@@ -283,13 +276,8 @@ public class InventoryActivity extends AppCompatActivity {
             if (m.find()) {
                 long time = System.currentTimeMillis();
                 String dia = m.group(1);
-                String postHeight = null;
-                String length = m.group(2);
-                
-                if ("Abutment".equals(type) && m.group(3) != null) {
-                    postHeight = m.group(2);
-                    length = m.group(3);
-                }
+                String postHeight = ("Abutment".equals(type) && m.group(3) != null) ? m.group(2) : null;
+                String length = ("Abutment".equals(type) && m.group(3) != null) ? m.group(3) : m.group(2);
 
                 item.setDiameter(dia);
                 item.setLength(length);
@@ -333,13 +321,18 @@ public class InventoryActivity extends AppCompatActivity {
 
     public void showDetailsDialog(InventoryItem item) {
         StringBuilder message = new StringBuilder();
+        message.append("Type: ").append(item.getItemType()).append("\n");
         message.append("REF: ").append(item.getRef() != null ? item.getRef() : "N/A").append("\n");
         message.append("LOT: ").append(item.getLot() != null ? item.getLot() : "N/A").append("\n");
         message.append("MFG: ").append(item.getMfgDate() != null ? item.getMfgDate() : "N/A").append("\n");
         message.append("EXP: ").append(item.getExpDate() != null ? item.getExpDate() : "N/A").append("\n");
 
+        String detailBaseSize = item.getDiameter() + " X ";
+        String detailMidSize = ("Abutment".equals(item.getItemType()) && item.getPostHeight() != null) ? item.getPostHeight() + " X " : "";
+        String sizeText = detailBaseSize + detailMidSize + item.getLength();
+
         new AlertDialog.Builder(this)
-                .setTitle("Details: " + item.getDiameter() + " X " + item.getLength())
+                .setTitle("Details: " + sizeText)
                 .setMessage(message.toString())
                 .setPositiveButton("Close", null)
                 .show();

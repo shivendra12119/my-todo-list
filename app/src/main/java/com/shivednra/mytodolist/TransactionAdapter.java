@@ -50,10 +50,15 @@ public class TransactionAdapter extends RecyclerView.Adapter<TransactionAdapter.
                 break;
         }
 
-        holder.textViewSize.setText(trans.getDiameter() + " X " + trans.getLength());
+        String sizeText = trans.getDiameter() + " X ";
+        if ("Abutment".equals(trans.getItemType()) && trans.getPostHeight() != null) {
+            sizeText += trans.getPostHeight() + " X ";
+        }
+        sizeText += trans.getLength();
+        holder.textViewSize.setText(sizeText);
         
-        // Show method (Scan/Manual) in details
-        String details = "LOT: " + trans.getLot() + " | REF: " + trans.getRef() + " (" + trans.getMethod() + ")";
+        // Show item type and method (Scan/Manual) in details
+        String details = trans.getItemType() + " | LOT: " + trans.getLot() + " | REF: " + trans.getRef() + " (" + trans.getMethod() + ")";
         holder.textViewDetails.setText(details);
         
         SimpleDateFormat sdf = new SimpleDateFormat("dd MMM, HH:mm", Locale.getDefault());

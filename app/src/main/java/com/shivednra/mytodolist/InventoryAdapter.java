@@ -72,7 +72,9 @@ public class InventoryAdapter extends RecyclerView.Adapter<InventoryAdapter.Inve
             sizeText += item.getPostHeight() + " X ";
         }
         sizeText += item.getLength();
-        holder.textViewSize.setText(sizeText);
+        
+        String displayTitle = "[" + (item.getItemType() != null ? item.getItemType() : "Unknown") + "] " + sizeText;
+        holder.textViewSize.setText(displayTitle);
         
         String rightText = "";
         if (mode == 0) { // Stock -> Show Expiry
